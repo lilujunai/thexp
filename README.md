@@ -1,11 +1,14 @@
-# thop
-torchhelper 2.0
+# thexp（TorchExperiment）
+一开始觉得pytorch试验写起来很麻烦，明明有很多流程可以抽象出来，每次却都要再写一遍，这可一点都不面向对象。[Torchhelper](https://github.com/sailist/TorchHelper)就是我在跑试验的过程中逐步抽象出来的一个框架。然而，毕竟是边写变抽象，从局部出发造全局的结果就是里面各个模块耦合度较高，而且写起来很乱....
+
+忍受不了这种乱的我于是决定再写一个，**thexp**就出来了，核心目的是为了管理试验和提供pytorch训练模型的流程的整个框架。和Torchhelper相比，大框架没有变，但用起来却是更简单了，各模块之间也尽可能的独立了出来，甚至可以单独使用。而且代码量也很简洁，简洁到好多地方我都觉得没有写测试用例的必要（绝不是我懒）！
+
+> 我觉得最重要的是，thexp 这个名字比 Torchhelper这个名字更好看了！
 
 ## Features
 
 - 覆盖全训练流程：从数据集准备，到训练，日志输出，模型保存，重新训练等一整套流程的快速操作。
 - 充分解耦：可以单独利用该框架中的saver、logger、meter、experiment来帮助你保存模型，输出/美化日志，管理试验。
-- IDE友好：变量可以追根溯源，不能溯源的也尽可能利用了IDE的自动补全。
 
 # 安装
 ```bash
@@ -17,15 +20,14 @@ git clone --depth=1 https://github.com/sailist/thexp
 cd thexp
 ```
 ## 测试
-还待补全，基本没怎么写测试用例...
 ```
 python -m pytest
 ```
+（虽然基本没怎么写测试用例
 
-# How2Start
-下面所有的例子都位于[./examples](./examples)中
-
- - [训练变量记录](#训练变量记录)
+# Quick Start
+thexp 主要提供以下几个功能
+ - [变量记录](#变量记录)
     - [格式化](#格式化)
     - [平均](#平均)
  - [日志输出](#日志输出)
@@ -33,11 +35,14 @@ python -m pytest
  - [模型保存](#模型保存)
  - [试验过程记录](#试验过程记录)
     - [排查试验记录](#排查试验记录)
- - [完整流程](#完整流程)
+ - 一套训练模型的[完整流程](#完整流程)
+    - [callbacks](#callbacks)
+ 
 
+> 下面所有的例子都位于[./examples](./examples)中
 
-## 训练变量记录
-thexp.frame.meter.Meter 专注于记录变量，并且尽可能的不干扰训练逻辑：
+## 变量记录
+thexp.frame.meter.Meter 专注于记录变量（并用于日志输出），并且尽可能的不干扰训练逻辑：
 ```python
 from thexp.frame import Meter
 import torch
@@ -57,6 +62,7 @@ print(m)
 @a=1  @b=2  @c=0.7072  @c1=0.3892  @c2=tensor([0.7060, 0.4127])  @c3=tensor([[0.2227, 0.8771, 0.7446, 0.7601],...
 ```
 所有在meter中的变量在取出的时候都是正常的，只有在输出的时候会被格式化成各种样子。
+
 ### 格式化
 有的时候，我们希望更改输出的精度，或者将小数变成百分比的形式输出，这利用meter很容易就可以实现：
 ```python
@@ -244,9 +250,7 @@ class MyModel(nn.Module):
 ```python
 from thexp.frame import Meter, Params, Trainer
 class MyTrainer(Trainer):
-    def __init__(self, params: Params):
-        super().__init__(params)
-
+    def initial_trainer(self,params:Params): # 在该方法中初始化模型、优化器、数据集
         from torch.optim import SGD
         from torchvision import transforms
         from torchvision.datasets import FakeData
@@ -264,7 +268,8 @@ class MyTrainer(Trainer):
         )
         self.cross = nn.CrossEntropyLoss()
 
-    def train_batch(self, eidx, idx, global_step, batch_data, params, device):
+    def train_batch(self, eidx, idx, global_step, batch_data, params, device): 
+        # 在该方法中写 每个batch 中的模型训练流程
         optim, cross = self.optim, self.cross
         meter = Meter()
         xs, ys = batch_data
@@ -279,6 +284,7 @@ class MyTrainer(Trainer):
         optim.zero_grad()
 
         return meter
+
 ```
 创建 param 和 trainer，开始训练
 ```python
@@ -296,10 +302,38 @@ trainer.train()
 
 上述所有的例子都位于[./examples](./examples)中
 
+### callbacks
+callbacks和keras中的回调类相似，在整个训练流程、每次epoch、iteration、eval、test开始前和结束后实现某些处理逻辑。
 
+利用trainer，其构建方法主要由以下几行代码完成
+```python
+params = Params()
+params.build_exp_name("mytrainer",...)
+trainer = MyTrainer(params)
+trainer.initial_exp("./experiment")
 
-
-## 测试
-```bash
-python -m pytest
+trainer.train()#...
 ```
+其中，在调用 `trainer.initial_exp` 的时候，会在内部调用 `trainer.initial_callback`和`trainer.initial_trainer`方法，因此初始化方法通过重写`initial_callback`来完成，而回调函数推荐在`initial_callback`方法中实现。
+
+使用方法如下（Trainer类中该方法的实现，也即默认情况下的callback）：
+```
+class Trainer:
+    def initial_callback(self):
+        from .callbacks import EvalCallback, LoggerCallback
+        ec = EvalCallback(1, 5) # 决定几个epoch eval一次，几个eopch test一次
+        ec.hook(self)
+
+        lc = LoggerCallback() # 对试验过程进行日志输出
+        lc.hook(self)
+```
+
+
+# More
+剩下的可能就是测试用例的补全和一些细节或bug的完善了，大的变更基本已经不会再有，后期用到了再修吧。
+- [] Plotter：用于将tensorboard中的图像等抽取出来保存到本地，这个等我跑完试验开始写论文的时候再说吧...
+- [] utils：添加一些更多的trick或torch操作，这个我用到了就会不断向上添加的
+
+# Log
+
+- 2020年3月10日：1.0.1：初步完成所有的框架

@@ -37,9 +37,7 @@ class MyModel(nn.Module):
 
 from thexp.frame import Meter, Params, Trainer
 class MyTrainer(Trainer):
-    def __init__(self, params: Params):
-        super().__init__(params)
-
+    def initial_trainer(self,params:Params):
         from torch.optim import SGD
         from torchvision import transforms
         from torchvision.datasets import FakeData

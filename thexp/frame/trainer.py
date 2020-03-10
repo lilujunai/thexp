@@ -95,7 +95,7 @@ class BaseTrainer:
     def initial_callback(self):
         pass
 
-    def initial_trainer(self):
+    def initial_trainer(self,params:Params):
         pass
 
     def initial_exp(self, exps_dir):
@@ -111,7 +111,7 @@ class BaseTrainer:
         self.experiment.add_event_listener(self.plotter.dynamic_board, exts=[".bd"])
         self.writter = SummaryWriter(self.experiment.hold_exp_part("board", exts=[".bd"]), filename_suffix=".bd")
         self.initial_callback()
-        self.initial_trainer()
+        self.initial_trainer(self.params)
 
     def train(self):
         params = self.params
@@ -355,6 +355,9 @@ class Trainer(BaseTrainer):
 
         lc = LoggerCallback()
         lc.hook(self)
+
+    def initial_trainer(self,params:Params):
+        pass
 
     def predict(self, xs):
         pass
