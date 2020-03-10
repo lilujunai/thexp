@@ -1,0 +1,28 @@
+{
+  "start_time": "20-03-10-152407",
+  "snap": {
+    "__main__": {
+      "fn": "E:/Python/iLearn/thexp/example/trainer.py",
+      "hash": "18bbe59bb80bfda2",
+      "snap": "./experiment\\code\\trainer.py-__main__-1"
+    }
+  },
+  "args": [
+    "E:/Python/iLearn/thexp/example/trainer.py"
+  ],
+  "files": {
+    "./experiment\\board\\events.out.tfevents.1583825047.DESKTOP-VBH8L9D.7440.0.bd": {
+      "mode": "modified",
+      "hash": "07c1db6266ed7f8a",
+      "atime": "200310-152407",
+      "exist": true
+    },
+    "./experiment\\logs\\200310152407.0.log": {
+      "mode": "modified",
+      "hash": "4b2ead71275d07a5",
+      "atime": "200310-152415",
+      "exist": true
+    }
+  },
+  "end_time": "20-03-10-152415"
+}
