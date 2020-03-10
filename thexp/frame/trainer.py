@@ -22,6 +22,7 @@ import pprint as pp
 import warnings
 from functools import wraps
 from typing import Any
+import os
 
 import torch
 from torch.optim.optimizer import Optimizer
@@ -98,6 +99,7 @@ class BaseTrainer:
         pass
 
     def initial_exp(self, exps_dir):
+        os.path.join(exps_dir,self.params.get_exp_name())
         self.experiment = Experiment(exps_dir)
         self.experiment.start_exp()
         self.logger = Logger()

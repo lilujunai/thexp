@@ -126,7 +126,6 @@ class Saver:
         :return:
         """
         fs = listdir_by_time(self.ckpt_dir)  # 按创建时间排序
-        print(fs)
         fs = [os.path.join(self.ckpt_dir, i) for i in fs if re.search(Saver.re_fn, i) is not None]
         return fs
 

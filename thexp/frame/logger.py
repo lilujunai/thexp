@@ -67,49 +67,49 @@ class Logger:
         space = [cur_date, "{}".format(prefix), *["{}".format(str(i)) for i in values]]
         space = [i for i in space if len(i.strip()) != 0]
 
-        if fix > 0:
+        if fix >= 0:
             left, right = self.sep.join(space[:fix + 1]), self.sep.join(space[fix + 1:])
+            fix = len(left)
+            logstr = self.sep.join((left, right))
+
             if inline:
-                return "\r{}".format(left), right
+                return "\r{}".format(logstr), fix
             else:
-                return left, "{}\n".format(right)
+                return "{}\n".format(logstr), fix
 
         space = self.sep.join(space)
 
         if inline:
-            return "\r{}".format(space)
+            return "\r{}".format(space), 0
         else:
-            return "{}\n".format(space)
+            return "{}\n".format(space), 0
 
     def inline(self, *values, prefix="", fix=0):
         """在一行内输出 前缀 和 LogMeter"""
-        logstr = self.format(*values, prefix=prefix, inline=True, fix=fix)
-        if fix > 0:
-            left, right = logstr
-            fix = len(left)
-            logstr = self.sep.join((left, right))
+        logstr, fix = self.format(*values, prefix=prefix, inline=True, fix=fix)
+
         self.handle(logstr, fix=fix)
 
     def info(self, *values, prefix=""):
         """以行为单位输出 前缀 和 LogMeter"""
-        logstr = self.format(*values, prefix=prefix, inline=False)
-        self.handle(logstr, level=Logger.V_INFO)
+        logstr, fix = self.format(*values, prefix=prefix, inline=False)
+        self.handle(logstr, level=Logger.V_INFO, fix=fix)
 
     def debug(self, *values, prefix=""):
-        logstr = self.format("DEBUG", *values, prefix=prefix, inline=False)
-        self.handle(logstr, level=Logger.V_DEBUG)
+        logstr, fix = self.format("DEBUG", *values, prefix=prefix, inline=False)
+        self.handle(logstr, level=Logger.V_DEBUG, fix=fix)
 
     def warn(self, *values, prefix=""):
-        logstr = self.format("WARN", *values, prefix=prefix, inline=False)
-        self.handle(logstr, level=Logger.V_WARN)
+        logstr, fix = self.format("WARN", *values, prefix=prefix, inline=False)
+        self.handle(logstr, level=Logger.V_WARN, fix=fix)
 
     def error(self, *values, prefix=""):
-        logstr = self.format("ERROR", *values, prefix=prefix, inline=False)
-        self.handle(logstr, level=Logger.V_ERROR)
+        logstr, fix = self.format("ERROR", *values, prefix=prefix, inline=False)
+        self.handle(logstr, level=Logger.V_ERROR, fix=fix)
 
     def fatal(self, *values, prefix=""):
-        logstr = self.format("FATAL", *values, prefix=prefix, inline=False)
-        self.handle(logstr, level=Logger.V_FATAL)
+        logstr, fix = self.format("FATAL", *values, prefix=prefix, inline=False)
+        self.handle(logstr, level=Logger.V_FATAL, fix=fix)
 
     def newline(self):
         """换行"""

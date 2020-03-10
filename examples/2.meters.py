@@ -17,6 +17,45 @@
              
     to purchase a commercial license.
 """
+import sys
+sys.path.insert(0,"../")
+from thexp import __VERSION__
+print(__VERSION__)
 
 
-from thexp import torch
+from thexp.frame.meter import Meter,AvgMeter
+import torch
+
+m = Meter()
+m.a = 1
+m.b = "2"
+m.c = torch.rand(1)[0]
+
+m.c1 = torch.rand(1)
+m.c2 = torch.rand(2)
+m.c3 = torch.rand(4, 4)
+print(m)
+
+m = Meter()
+m.a = 0.236
+m.percent(m.a_)
+print(m)
+
+
+am = AvgMeter()
+for j in range(5):
+    for i in range(100):
+        m = Meter()
+        m.percent(m.c_)
+        m.a = 1
+        m.b = "2"
+        m.c = torch.rand(1)[0]
+
+        m.c1 = torch.rand(1)
+        m.c2 = torch.rand(2)
+        m.c3 = torch.rand(4, 4)
+        m.d = [4]
+        m.e = {5: "6"}
+        # print(m)
+        am.update(m)
+    print(am)

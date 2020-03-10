@@ -17,27 +17,24 @@
              
     to purchase a commercial license.
 """
+import sys
+sys.path.insert(0,"../")
+from thexp import __VERSION__
+print(__VERSION__)
 
-from thexp.frame.meter import Meter,AvgMeter
-import random
-import numpy as np
-import torch
-m = Meter()
-am = AvgMeter()
 
-for j in range(5):
-    for i in range(100):
-        m = Meter()
-        m.percent(m.c_)
-        m.a = 1
-        m.b = "2"
-        m.c = torch.rand(1)[0]
+import time
+from thexp.frame.logger import Logger
+from thexp.frame.meter import Meter
+from thexp.frame.params import Params
+logger = Logger()
 
-        m.c1 = torch.rand(1)
-        m.c2 = torch.rand(2)
-        m.c3 = torch.rand(4, 4)
-        m.d = [4]
-        m.e = {5: "6"}
-        # print(m)
-        am.update(m)
-    print(am)
+meter = Meter()
+meter.a = 3.13524635465
+meter.b = "long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;"
+
+for i in range(100):
+    logger.inline(meter,prefix="inline examples")
+    time.sleep(0.2)
+logger.info(1,2,3,{4:4},prefix="info examples")
+logger.info(meter,prefix="info examples")

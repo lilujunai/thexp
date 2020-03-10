@@ -17,12 +17,15 @@
              
     to purchase a commercial license.
 """
-import time
 import sys
 sys.path.insert(0,"../")
-from thexp.frame.experiment import Experiment
-from thexp.frame.logger import Logger
-from thexp.frame.saver import Saver
+from thexp import __VERSION__
+print(__VERSION__)
+
+
+import time
+from thexp.frame import Logger,Saver,Experiment
+
 exp = Experiment("./exp")
 
 @exp.keycode()
@@ -39,6 +42,3 @@ def train():
 
 exp.start_exp()
 train()
-
-
-

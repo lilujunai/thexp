@@ -17,13 +17,17 @@
              
     to purchase a commercial license.
 """
+import sys
+sys.path.insert(0,"../")
+from thexp import __VERSION__
+print(__VERSION__)
 
-from thexp.frame.experiment import ExperimentViewer
+from thexp.frame import ExperimentViewer
 from datetime import timedelta
-expview = ExperimentViewer()
-print(expview.list())
-# print(expview.recent(timedeltaobj=timedelta(minutes=20)))
 import pprint as pp
-# pp.pprint(expview.backtracking("ckpt"))
-# pp.pprint(expview.exp_code("20-03-08 12:14:13"))
+expview = ExperimentViewer()
+pp.pprint(expview.list())
+pp.pprint(expview.recent(timedeltaobj=timedelta(minutes=20)))
+pp.pprint(expview.backtracking("ckpt"))
+pp.pprint(expview.exp_code("20-03-08 12:14:13"))
 pp.pprint(expview.exp_info("20-03-08 12:24:47"))

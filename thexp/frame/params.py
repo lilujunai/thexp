@@ -28,6 +28,7 @@ import torch
 class BaseParams:
     def __init__(self):
         self._param_dict = OrderedDict()
+        self._exp_name = None
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name.startswith("_"):
@@ -82,6 +83,10 @@ class BaseParams:
         self._exp_name = sep.join(res)
         return self._exp_name
 
+    def get_exp_name(self):
+        assert self._exp_name is not None, "run build_exp_name() before get_exp_name()"
+        return self._exp_name
+
     def from_args(self):
         def func(**kwargs):
             for k, v in kwargs.items():
@@ -93,7 +98,7 @@ class BaseParams:
 class Params(BaseParams):
     def __init__(self):
         super().__init__()
-        self.epoch = 3
+        self.epoch = 10
         self.eidx = 1
         self.idx = 0
         self.global_step = 0

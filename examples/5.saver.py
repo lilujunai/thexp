@@ -17,29 +17,21 @@
              
     to purchase a commercial license.
 """
-
-import time
-from thexp.frame.logger import Logger
-from thexp.frame.meter import Meter
-from thexp.frame.params import Params
-logger = Logger()
+import sys
+sys.path.insert(0,"../")
+from thexp import __VERSION__
+print(__VERSION__)
 
 
+from thexp.frame.saver import Saver
 
-
-meter = Meter()
-meter.a = 3.13524635465
-meter.b = 5.13524635465
-meter.c = 5.13524635465
-meter.d = 5.13524635465
-meter.e = 5.13524635465
-meter.f = 5.13524635465
-meter.f1 = 5.13524635465
-meter.f2 = 5.13524635465
-meter.f3 = 5.13524635465
-
-# logger.info("\n",meter)
-
+saver = Saver("./sav")
 for i in range(10):
-    logger.inline(meter)
-    time.sleep(0.2)
+    saver.save_keypoint(i,{"a":i},{"b":i})
+    print(saver.find_keypoints())
+for i in range(10):
+    saver.save_checkpoint(i,{"a":i},{"b":i})
+    print(saver.find_checkpoints())
+for i in range(10):
+    saver.save_model(i,{"a":i},{"b":i})
+    print(saver.find_models())

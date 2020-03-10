@@ -17,15 +17,28 @@
              
     to purchase a commercial license.
 """
+import sys
+sys.path.insert(0,"../")
+from thexp import __VERSION__
+print(__VERSION__)
 
-import json
+from thexp.utils import random
+import torch.nn as nn
+import torch
+from torch.optim import SGD
 
-from datetime import datetime
+stt = random.get_state()
+for i in range(2):
+    data = torch.rand(5, 2)
+    y = torch.tensor([0, 0, 0, 0, 0])
+    model = nn.Linear(2, 2)
 
-def datedefault(obj):
-    if isinstance(obj,datetime):
-        return obj.strftime('%y-%m-%d %H:%M:%S')
+    sgd = SGD(model.parameters(), lr=0.01)
+    logits = model(data)
+    loss = nn.CrossEntropyLoss()(logits, y)
+    loss.backward()
+    sgd.step()
+    sgd.zero_grad()
 
-
-with open("1.json","w",encoding="utf-8") as w:
-    json.dump({1:datetime.now(),2:3},w,default=datedefault)
+    print(list(model.parameters()))
+    random.set_state(stt)
