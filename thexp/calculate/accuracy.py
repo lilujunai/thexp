@@ -17,15 +17,30 @@
              
     to purchase a commercial license.
 """
+import torch
 
-__VERSION__ = "1.1.10"
 
-from .frame.databundler import DataBundler
-from .frame.experiment import ExperimentViewer, Experiment
-from .frame.logger import Logger
-from .frame.meter import Meter, AvgMeter
-from .frame.params import Params
-from .frame.saver import Saver
-from .frame.trainer import Trainer
+def classify(preds, labels, cacu_rate=False, topk=None):
+    """
+    用于分类的准确率
+    :param preds: [batch,logits]
+    :param labels: [labels,]
+    :param cacu_rate: 计算正确率而不是计数
+    :param topk: list(int) ，表明计算哪些topk
+    :return:
+        if cacu_rate:
+            [topk_rate,...]
+        else:
+            total, [topk_count,...]
+    """
+    if topk is None:
+        topk = (1,5)
+    k = topk
+    _, maxk = torch.topk(preds, max(*k), dim=-1)
+    total = labels.size(0)
+    test_labels = labels.view(-1, 1)  # reshape labels from [n] to [n,1] to compare [n,k]
 
-from .utils import torch
+    if cacu_rate:
+        return [(test_labels == maxk[:, 0:i]).sum().item() / total for i in k]
+    else:
+        return total, [(test_labels == maxk[:, 0:i]).sum().item() for i in k]

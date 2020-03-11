@@ -5,7 +5,8 @@
       <paths name="ILearn">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/jupyter_data/thexp" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="" local="" />
           </mappings>
         </serverdata>
       </paths>

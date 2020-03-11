@@ -157,7 +157,7 @@ class AvgMeter(Meter):
                     self._param_dict[name] = AvgItem()
                 self._param_dict[name].update(value)
             elif isinstance(value, torch.Tensor):
-
+                value = value.detach().cpu().numpy()
                 if len(value.shape) == 0 or sum(value.shape) == 1:
                     if name not in self._param_dict:
                         self._param_dict[name] = AvgItem()

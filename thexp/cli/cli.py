@@ -16,26 +16,68 @@
             sailist@outlook.com
              
     to purchase a commercial license.
+
+
 """
-from ..frame.experiment import ExperimentViewer
+
+doc = """
+Usage:
+ thexp init
+ thexp config -l
+ thexp config --global <name> <value> 
+ thexp config --global -u <name>
+ thexp config --global -l
+ thexp config --local <name> <value>
+ thexp config --global -u <name>
+ thexp config --local -l
+ thexp config --global -e
+ thexp config --local -e
+"""
+# 检测是否init，没有报错 fatal: unable to read config file '.git/config': No such file or directory
+from docopt import docopt
+from thexp.frame.experiment import globs
+from thexp import __VERSION__
 import os
+def init():
+    init_dir = os.path.join(os.getcwd(),".thexp")
+    os.makedirs(init_dir,exist_ok=True)
 
+    if globs.local_fn != None:
+        print("ok.")
 
-def clear_exp(exps_fn=None):
-    i = ""
-    while i.lower() != "y" or i.lower() != "n":
-        i = input("really?[y/n]")
+def update(mode,name,val):
+    globs.update(mode,name,val)
 
-    if i == "y":
-        if exps_fn is None:
-            ExperimentViewer().drop()
-        else:
-            dir,fn = os.path.split(exps_fn)
-            ExperimentViewer(dir,fn).drop()
-        print("droped.")
-    else:
-        print("canceled.")
+def unset(mode,name):
+    globs.unset(mode,name)
 
-"""
- - 显示当前目录下所有的 exp
-"""
+def list(globa=False,local=False):
+    globs.list_config(globa,local)
+
+arguments = docopt(doc, version=__VERSION__)
+
+if arguments["init"]:
+    init()
+elif arguments["config"]:
+    if arguments["--global"]:
+        if arguments["-l"]:
+            list(globa=True)
+        elif arguments["<name>"]:
+            if arguments["-u"]:
+                globs.unset("global",arguments["<name>"])
+            else:
+                globs.update("global",arguments["<name>"],arguments["<value>"])
+    elif arguments["--local"]:
+        if arguments["-l"]:
+            list(local=True)
+        elif arguments["<name>"]:
+            if arguments["-u"]:
+                globs.unset("local", arguments["<name>"])
+            else:
+                globs.update("local", arguments["<name>"], arguments["<value>"])
+    elif arguments["-l"]:
+        list(True,True)
+else:
+    print(arguments)
+
+exit(0)

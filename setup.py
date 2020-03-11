@@ -11,7 +11,7 @@ setup(
     license='Apache License 2.0',
     include_package_data = True,
     install_requires = [
-      "torch","fire","tensorboard","watchdog"
+      "torch","fire","tensorboard","watchdog","docopt"
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -25,7 +25,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts':[
-            # 'TODO = packagepath.pythonfilename:main'
+            'thexp = thexp.cli.cli:main'
         ]
       },
 )

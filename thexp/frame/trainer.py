@@ -18,11 +18,11 @@
     to purchase a commercial license.
 """
 import bisect
+import os
 import pprint as pp
 import warnings
 from functools import wraps
 from typing import Any
-import os
 
 import torch
 from torch.optim.optimizer import Optimizer
@@ -32,10 +32,12 @@ from torch.utils.tensorboard import SummaryWriter
 from .databundler import DataBundler
 from .experiment import Experiment
 from .logger import Logger
+from .meter import AvgMeter
 from .params import Params
 from .plotter import Plotter
-from .saver import Saver
 from .rndmanager import RndManager
+from .saver import Saver
+
 
 class BaseTrainer:
     _ignore_call_back = {"model_dict", "optim_dict",
@@ -95,19 +97,19 @@ class BaseTrainer:
     def initial_callback(self):
         pass
 
-    def initial_trainer(self,params:Params):
+    def initial_trainer(self, params: Params):
         pass
 
     def initial_exp(self, exps_dir):
-        os.path.join(exps_dir,self.params.get_exp_name())
-        self.experiment = Experiment(exps_dir)
+        exp_dir = os.path.join(exps_dir, self.params.get_exp_name())
+        self.experiment = Experiment(exp_dir)
         self.experiment.start_exp()
         self.logger = Logger()
         self.logger.add_log_dir(self.experiment.hold_exp_part("logs", exts=[".log"]))
         self.saver = Saver(self.experiment.hold_exp_part("modules", exts=[".pth", ".json"]))
         self.plotter = Plotter(self.experiment.hold_exp_part("plot", exts=[".eps", ".jpeg", ".jpg",
                                                                            ".pdf", ".png", ".svg", ".tif", ".tiff"]))
-        self.rnd = RndManager(self.experiment.hold_exp_part("rnd",exts=[".rnd"]))
+        self.rnd = RndManager(self.experiment.hold_exp_part("rnd", exts=[".rnd"]))
         self.experiment.add_event_listener(self.plotter.dynamic_board, exts=[".bd"])
         self.writter = SummaryWriter(self.experiment.hold_exp_part("board", exts=[".bd"]), filename_suffix=".bd")
         self.initial_callback()
@@ -123,9 +125,11 @@ class BaseTrainer:
                 break
 
     def train_epoch(self, eidx, params):
+        avgMeter = AvgMeter()
         for idx, batch_data in enumerate(self.iter_train_dataloader()):
             self.change_mode(True)
-            self.train_batch(eidx, idx, self.params.global_step, batch_data, params, self.device)
+            meter = self.train_batch(eidx, idx, self.params.global_step, batch_data, params, self.device)
+            avgMeter.update(meter)
             self.change_mode(False)
 
             params.global_step += 1
@@ -133,6 +137,7 @@ class BaseTrainer:
             if self.train_epoch_toggle:
                 self.train_epoch_toggle = False
                 break
+        return avgMeter
 
     def train_step(self, steps):
         param = self.params
@@ -356,7 +361,7 @@ class Trainer(BaseTrainer):
         lc = LoggerCallback()
         lc.hook(self)
 
-    def initial_trainer(self,params:Params):
+    def initial_trainer(self, params: Params):
         pass
 
     def predict(self, xs):

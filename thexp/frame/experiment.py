@@ -27,16 +27,113 @@ import sys
 from collections import Iterable, defaultdict
 from datetime import datetime
 from datetime import timedelta
+from typing import Any
 
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from ..base_classes.tree import tree
 from ..utils import generel_util as gu
 from ..utils.pickledb import PickleDB
 
 __all__ = ["Experiment", "ExperimentViewer"]
 import pprint as pp
+
+from ..base_classes.tree import tree
+
+
+class __Global:
+    """global var"""
+
+    @property
+    def glob_fn(self):
+        return self._glob_fn
+
+    @property
+    def local_fn(self):
+        if self._local_fn is None:
+            self._local_fn = self.check_local_dir_exists()
+            if self._local_fn is not None:
+                self._local_info = self.load(self.local_fn)
+            else:
+                sys.stderr.write("fatal: unable to read config file '.thexp/config.json': No such file or directory\n")
+                exit(1)
+        return self._local_fn
+
+    def __init__(self):
+        exp_dir = gu.home_dir()
+        self._glob_fn = os.path.join(exp_dir, "config.json")
+        self._local_fn = self.check_local_dir_exists()
+
+        self._glob_info = self.load(self.glob_fn)
+        self._local_info = self.load(self._local_fn)
+
+    def list_config(self, glob=True, local=True):
+        if glob:
+            print("global:")
+            pp.pprint(self.load(self.glob_fn))
+
+        if local:
+            print("local:")
+            pp.pprint(self.load(self.local_fn))
+
+    def update(self, mode, name, val):
+        if mode == "global":
+            self._glob_info[name] = val
+            self.dump(self.glob_fn, self._glob_info)
+        elif mode == "local":
+            self._local_info[name] = val
+            self.dump(self.local_fn, self._local_info)
+
+    def unset(self, mode, name):
+        if mode == "global":
+            if name in self._glob_info:
+                self._glob_info.pop(name)
+                self.dump(self.glob_fn, self._glob_info)
+        elif mode == "local":
+            if name in self._local_info:
+                self._local_info.pop(name)
+                self.dump(self.local_fn, self._local_info)
+
+    def check_local_dir_exists(self):
+        # import os
+        cur = os.getcwd()
+        while len(cur):
+            if os.path.exists(os.path.join(cur, ".thexp")):
+                local_fn = os.path.join(cur, ".thexp", "config.json")
+                if local_fn != self.glob_fn:
+                    return local_fn
+
+            ncur, _ = os.path.split(cur)
+            if cur != ncur:
+                cur = ncur
+            else:
+                break
+        return None
+
+    def load(self, fn):
+        if fn is None:
+            return {}
+
+        if not os.path.exists(fn):
+            self.dump(fn, {})
+            return {}
+        with open(fn, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def dump(self, fn, obj):
+        with open(fn, "w", encoding="utf-8") as f:
+            json.dump(obj, f, indent=2)
+
+    def __getitem__(self, item):
+        if item.startswith("_"):
+            raise AttributeError(item)
+        if item in self._local_info:
+            return self._local_info[item]
+        elif item in self._glob_info:
+            return self._glob_info[item]
+        raise AttributeError(item)
+
+globs = __Global()
 
 
 class Experiment:
@@ -62,7 +159,7 @@ class Experiment:
             exps_dir = os.path.join(main_dir, "experiment")
         self.exp_dir = exps_dir
         os.makedirs(self.exp_dir, exist_ok=True)
-
+        self.glob = globs
         self.db = PickleDB(self.dbfile, auto_dump=True)
 
         self.event_handler = ExperimentEventHandler()
@@ -150,6 +247,9 @@ class Experiment:
 
     def summary(self):
         pp.pprint(self.exp_info)
+
+    def __getattr__(self, item):
+        return self.glob[item]
 
 
 class ExperimentEventHandler(FileSystemEventHandler):
@@ -310,7 +410,3 @@ class ExperimentViewer:
 
     def exp_code(self, datekey):
         return self.__db.get(datekey)["snap"]
-
-
-if __name__ == '__main__':
-    pass

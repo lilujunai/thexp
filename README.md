@@ -334,7 +334,7 @@ class Trainer:
  - [ ] Plotter：用于将tensorboard中的图像等抽取出来保存到本地，这个等我跑完试验开始写论文的时候再说吧...
  - [ ] utils：添加一些更多的trick或torch操作，这个我用到了就会不断向上添加的
  - [x] [thexp-implement](https://github.com/sailist/thexp-implement)：以后复现各种模型我会统一用这个框架来复现，争取让每一个我过手的模型都简洁清晰2333
-
+ - [ ] 全局变量：利用experiment来实现全局变量，比如数据集啊，保存根路径啊之类的
 
 # Log
 
