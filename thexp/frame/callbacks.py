@@ -192,6 +192,9 @@ class EvalCallback(TrainCallback):
         if param.eidx % self.test_in_per_epoch != self.test_in_per_epoch - 1:
             trainer.test()
 
+    def __repr__(self):
+        return self._repr_by_val("eval_in_per_epoch","test_per_epoch")
+
 
 class LoggerCallback(TrainCallback):
     def __init__(self, avg=True):
@@ -244,3 +247,4 @@ class LoggerCallback(TrainCallback):
         if meter is None:
             meter = ""
         trainer.logger.info("tests end", meter)
+

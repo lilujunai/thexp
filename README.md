@@ -37,7 +37,7 @@ thexp 主要提供以下几个功能
     - [排查试验记录](#排查试验记录)
  - 一套训练模型的[完整流程](#完整流程)
     - [callbacks](#callbacks)
- 
+ - [全局变量获取](#全局变量获取)
 
 > 下面所有的例子都位于[./examples](./examples)中
 
@@ -328,14 +328,49 @@ class Trainer:
         lc.hook(self)
 ```
 
+## 全局变量获取
+```
+Usage:
+ thexp init # 初始化
+ thexp config -l # 列出全部变量
+ thexp config --global <name> <value> # 设置某全局变量 
+ thexp config --global -u <name> # 删除某全局变量
+ thexp config --global -l # 列出所有全局变量
+ thexp config --local <name> <value>  # ... 同上
+ thexp config --local -u <name> 
+ thexp config --local -l
+```
+如
+```
+thexp config --global datasets /path/to/all/datasets
+```
+
+在项目中，就可以直接使用：
+```python
+from thexp.frame.experiment import globs
+
+print(globs["datasets"])
+
+globs.update("local","a",1)
+globs.list_config(globa=True,local=True)
+print(globs.glob_fn)
+```
+
 
 # More
 剩下的可能就是测试用例的补全和一些细节或bug的完善了，大的变更基本已经不会再有，后期用到了再修吧。
  - [ ] Plotter：用于将tensorboard中的图像等抽取出来保存到本地，这个等我跑完试验开始写论文的时候再说吧...
  - [ ] utils：添加一些更多的trick或torch操作，这个我用到了就会不断向上添加的
- - [x] [thexp-implement](https://github.com/sailist/thexp-implement)：以后复现各种模型我会统一用这个框架来复现，争取让每一个我过手的模型都简洁清晰2333
- - [ ] 全局变量：利用experiment来实现全局变量，比如数据集啊，保存根路径啊之类的
+ - [x] （持续更新...）[thexp-implement](https://github.com/sailist/thexp-implement)：以后复现各种模型我会统一用这个框架来复现，争取让每一个我过手的模型都简洁清晰2333
+ - [x] （2020年3月11日）全局变量：利用experiment来实现全局变量，比如数据集啊，保存根路径啊之类的
+
+## 低优先级
+ - [ ] 任务队列？在显存不够的时候，一个试验跑完了另一个试验跑，类似这样的...
+ 
+ 
+
 
 # Log
 
 - 2020年3月10日：1.0.1：初步完成所有的框架
+- 2020年3月11日：使用的过程中出了一些bug，修改了一下，现在正在用来跑我的试验，舒服了...

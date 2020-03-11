@@ -18,12 +18,23 @@
     to purchase a commercial license.
 """
 
-from thexp.frame.experiment import globs
+from torch import randperm
+from torch._utils import _accumulate
+from torch.utils.data.dataset import Subset
 
-globs["datasets"] = "E:/Download/dataset"
 
-print()
-globs.update("local","a",1)
-globs.list_config(True,True)
+def random_split_with_indices(dataset, lengths,indices=None):
+    r"""
+    Randomly split a dataset into non-overlapping new datasets of given lengths.
 
-print(globs.glob_fn)
+    Arguments:
+        dataset (Dataset): Dataset to be split
+        lengths (sequence): lengths of splits to be produced
+    """
+    if sum(lengths) != len(dataset):
+        raise ValueError("Sum of input lengths does not equal the length of the input dataset!")
+    if indices is None:
+        indices = randperm(sum(lengths)).tolist()
+
+    return [Subset(dataset, indices[offset - length:offset]) for offset, length in
+            zip(_accumulate(lengths), lengths)], indices

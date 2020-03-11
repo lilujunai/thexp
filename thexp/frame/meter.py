@@ -122,16 +122,20 @@ class Meter:
         else:
             return self._param_dict[item]
 
-    def __getitem__(self, item):
-        item = str(item)
-        return self.__getattr__(item)
-
-    def __repr__(self):
+    def serialize(self):
         log_dict = OrderedDict()
         for k, v in self._param_dict.items():
             if k in self._format_dict:
                 v = self._format_dict[k](v)
             log_dict[k] = v
+        return log_dict
+
+    def __getitem__(self, item):
+        item = str(item)
+        return self.__getattr__(item)
+
+    def __repr__(self):
+        log_dict = self.serialize()
 
         return "  ".join(["@{}={}".format(k, v) for k, v in log_dict.items()])
 
@@ -173,14 +177,10 @@ class AvgMeter(Meter):
         self._format_dict.update(meter._format_dict)
         self._convert_type.extend(meter._convert_type)
 
-    def __repr__(self):
+    def serialize(self):
         log_dict = OrderedDict()
         for k, v in self._param_dict.items():
             if k in self._format_dict:
-                if isinstance(v,AvgItem):
-                    v = "{}({})".format(self._format_dict[k](v._item),self._format_dict[k](v.avg))
-                else:
-                    v = self._format_dict[k](v)
+                v = self._format_dict[k](v)
             log_dict[k] = v
-
-        return "  ".join(["@{}={}".format(k, v) for k, v in log_dict.items()])
+        return log_dict

@@ -113,6 +113,8 @@ class AvgItem:
         return self._sum / self._count
 
     def __repr__(self) -> str:
+        if self._item == self.avg:
+            return str(self._item)
         return str("{}({})".format(self._item, self.avg))
 
     def __getattribute__(self, name: str) -> Any:

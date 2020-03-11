@@ -28,7 +28,7 @@ Usage:
  thexp config --global -u <name>
  thexp config --global -l
  thexp config --local <name> <value>
- thexp config --global -u <name>
+ thexp config --local -u <name>
  thexp config --local -l
  thexp config --global -e
  thexp config --local -e
