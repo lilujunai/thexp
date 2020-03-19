@@ -56,7 +56,7 @@ def split_sub_matrix(mat: torch.Tensor, *sizes):
     return mat
 
 
-def cartesian_product(left: torch.Tensor, right: torch.Tensor):
+def cartesian_product(left: torch.Tensor, right: torch.Tensor=None):
     """
     笛卡尔积
     example:
@@ -68,6 +68,11 @@ def cartesian_product(left: torch.Tensor, right: torch.Tensor):
     """
     # za = mat.repeat_interleave(mat.shape[0], dim=0)
     # zb = mat.repeat([mat.shape[0], 1])
+    if right is None:
+        right = left
+
     nleft = left.repeat_interleave(right.shape[0], dim=0)
     nright = right.repeat(*[item if i == 0 else 1 for i, item in enumerate(left.shape)])
     return nleft, nright
+
+# def similarity(ipt1,ipt2=None,norm)

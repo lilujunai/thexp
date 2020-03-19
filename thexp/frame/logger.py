@@ -69,7 +69,7 @@ class Logger:
 
         if fix >= 0:
             left, right = self.sep.join(space[:fix + 1]), self.sep.join(space[fix + 1:])
-            fix = len(left)
+            fix = len(left) + len(self.sep)
             logstr = self.sep.join((left, right))
 
             if inline:

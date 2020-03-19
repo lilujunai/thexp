@@ -17,11 +17,9 @@
              
     to purchase a commercial license.
 """
-import sys
-sys.path.insert(0,"../")
-from thexp import __VERSION__
-print(__VERSION__)
 
+
+from thexp import Trainer
 
 import torch.nn as nn
 class MyModel(nn.Module):
@@ -36,18 +34,14 @@ class MyModel(nn.Module):
 
 
 from thexp.frame import Meter, Params, Trainer
-from thexp.frame.callbacks import TimingCheckpoint,KeyErrorSave
+from thexp.frame.callbacks import TimingCheckpint
 class MyTrainer(Trainer):
 
 
     def initial_callback(self):
         super().initial_callback()
-        tc = TimingCheckpoint(2)
+        tc = TimingCheckpint(2)
         tc.hook(self)
-
-        KeyErrorSave(True).hook(self)
-
-
 
     def initial_trainer(self,params:Params):
         from torch.optim import SGD
@@ -85,21 +79,18 @@ class MyTrainer(Trainer):
 
 
 params = Params()
-params.epoch=20
+params.epoch=5
 params.lr = 0.01
 params.build_exp_name("mytrainer", "lr")
 
 trainer = MyTrainer(params)
-trainer.initial_exp("./experiment")
+trainer.initial_exp("./test_experiment")
 
-trainer.train()
-trainer.load_keypoint(4)
-trainer.train()
 
-# trainer.save_checkpoint()
-# trainer.save_keypoint()
-# trainer.save_model()
-# trainer.load_model(10)
-
-# trainer = MyTrainer(params)
-# trainer.train()
+def test_trainer():
+    trainer.params.eidx = 4
+    trainer.save_keypoint(4)
+    trainer.train()
+    assert trainer.params.eidx == trainer.params.epoch+1
+    trainer.load_keypoint(4)
+    assert trainer.params.eidx == 5

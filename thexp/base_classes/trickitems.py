@@ -51,10 +51,10 @@ class NoneItem:
         return 0 - other
 
     def __truediv__(self, other):
-        return 1 / other
+        return 1/other
 
     def __floordiv__(self, other):
-        return other
+        return 1/other
 
     def __repr__(self):
         return "NoneItem()"
@@ -76,6 +76,12 @@ class NoneItem:
 
     def __ne__(self, other):
         return other is not None
+
+    def __int__(self):
+        return 0
+
+    def __float__(self):
+        return 0
 
 
 class AvgItem:

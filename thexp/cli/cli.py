@@ -41,7 +41,7 @@ import os
 def init():
     init_dir = os.path.join(os.getcwd(),".thexp")
     os.makedirs(init_dir,exist_ok=True)
-
+    globs.update("local","project_dir",os.path.abspath(os.getcwd()))
     if globs.local_fn != None:
         print("ok.")
 

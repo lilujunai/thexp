@@ -17,28 +17,14 @@
              
     to purchase a commercial license.
 """
-import sys
-sys.path.insert(0,"../")
-from thexp import __VERSION__
-print(__VERSION__)
 
 
-import time
-from thexp.frame import Logger,Saver
-from thexp.frame.experiment import exp
+from thexp import globs
+from torchvision import datasets
+from thexp.utils.date.dataset import SemiDataset,ratio2length
+
+base = datasets.CIFAR10(globs["datasets"], train=True, download=False)
 
 
-@exp.keycode()
-def train():
-    logger = Logger()
-    logger.add_log_dir(exp.hold_exp_part("log",[".log"]))
-    save = Saver(exp.hold_exp_part("save",[".ckpt",".pth"]))
-    for i in range(10):
-        for j in range(5):
-            save.save_checkpoint(j, {}, {})
-            time.sleep(0.2)
-            logger.info(i)
 
-
-exp.start_exp()
-train()
+SemiDataset.create_indice(4000,5000,)

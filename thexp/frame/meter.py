@@ -172,6 +172,8 @@ class AvgMeter(Meter):
                 self._param_dict[name] = value
 
     def update(self, meter):
+        if meter is None:
+            return
         for k, v in meter._param_dict.items():
             self[k] = v
         self._format_dict.update(meter._format_dict)

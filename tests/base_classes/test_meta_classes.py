@@ -17,28 +17,17 @@
              
     to purchase a commercial license.
 """
-import sys
-sys.path.insert(0,"../")
-from thexp import __VERSION__
-print(__VERSION__)
 
+from thexp.base_classes.metaclasses import Merge
 
-import time
-from thexp.frame import Logger,Saver
-from thexp.frame.experiment import exp
+def test_merge():
+    class A(metaclass=Merge):
+        _item = {1:2,3:4}
 
+    class B(A):
+        _item = {5:6,7:8}
 
-@exp.keycode()
-def train():
-    logger = Logger()
-    logger.add_log_dir(exp.hold_exp_part("log",[".log"]))
-    save = Saver(exp.hold_exp_part("save",[".ckpt",".pth"]))
-    for i in range(10):
-        for j in range(5):
-            save.save_checkpoint(j, {}, {})
-            time.sleep(0.2)
-            logger.info(i)
+    b = B()
+    assert 1 in b._item and 3 in b._item and 5 in b._item and 7 in b._item
+    assert 1 in B._item and 3 in B._item and 5 in B._item and 7 in B._item
 
-
-exp.start_exp()
-train()

@@ -19,12 +19,14 @@
 """
 
 import os
+import warnings
 from functools import wraps
 
 from .meter import AvgMeter
 from .meter import Meter
 from .params import Params
 from .trainer import BaseTrainer
+from ..base_classes.trickitems import NoneItem, AvgItem
 
 
 class BaseCallback():
@@ -52,10 +54,17 @@ class BaseCallback():
             @wraps(func)
             def on_exception(trainer: BaseTrainer, tfunc, param: Params, e: BaseException, *args, **kwargs):
                 self.ecp = getattr(self, "ecp", None)
+                res = None
                 if self.ecp != e:
-                    self.on_first_exception(trainer, tfunc, param, e, *args, **kwargs)
+                    res = self.on_first_exception(trainer, tfunc, param, e, *args, **kwargs)
                     self.ecp = e
-                func(trainer, tfunc, param, e, *args, **kwargs)
+
+                eres = func(trainer, tfunc, param, e, *args, **kwargs)
+                if res is None:
+                    return eres
+                else:
+                    return res
+
 
             return on_exception
 
@@ -101,6 +110,7 @@ class BaseCallback():
     def hook(self, trainer: BaseTrainer):
         """自动将自己已有的on_func_begin/on_func_end方法绑定"""
         trainer.add_callback(self)
+        self._trainer = trainer
 
     def unhook(self):
         self._trainer.remove_callback(self)
@@ -125,7 +135,7 @@ class TrainCallback(BaseCallback):
             self.on_train_epoch_begin(trainer, func, param, *args, **kwargs)
         elif func.__name__ == "train_batch":
             self.on_train_batch_begin(trainer, func, param, *args, **kwargs)
-        elif func.__name__ == "tests":
+        elif func.__name__ == "test":
             self.on_test_begin(trainer, func, param, *args, **kwargs)
         elif func.__name__ == "eval":
             self.on_eval_begin(trainer, func, param, *args, **kwargs)
@@ -152,7 +162,7 @@ class TrainCallback(BaseCallback):
             self.on_train_epoch_end(trainer, func, param, meter, *args, **kwargs)
         elif func.__name__ == "train_batch":
             self.on_train_batch_end(trainer, func, param, meter, *args, **kwargs)
-        elif func.__name__ == "tests":
+        elif func.__name__ == "test":
             self.on_test_end(trainer, func, param, meter, *args, **kwargs)
         elif func.__name__ == "eval":
             self.on_eval_end(trainer, func, param, meter, *args, **kwargs)
@@ -193,7 +203,7 @@ class EvalCallback(TrainCallback):
             trainer.test()
 
     def __repr__(self):
-        return self._repr_by_val("eval_in_per_epoch","test_per_epoch")
+        return self._repr_by_val("eval_in_per_epoch", "test_per_epoch")
 
 
 class LoggerCallback(TrainCallback):
@@ -248,3 +258,142 @@ class LoggerCallback(TrainCallback):
             meter = ""
         trainer.logger.info("tests end", meter)
 
+
+class ModelCheckpoint(TrainCallback):
+    def __init__(self, monitor, mode="train", lower=True, start_epoch=0):
+        self.monitor = monitor
+        self.mode = mode
+        self.lower = lower
+        self.last_val = NoneItem()
+        self.start_epoch = start_epoch
+
+    def on_train_epoch_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
+        self.update("train", trainer, param, meter)
+
+    def update(self, cur_mode, trainer, param, meter):
+        if cur_mode != self.mode:
+            return
+        if param.eidx > self.start_epoch:
+            item = meter[self.monitor]
+            if isinstance(item, AvgItem):
+                item = item.avg
+            if isinstance(item, NoneItem):
+                return
+
+            if self.lower:
+                if self.last_val > item:
+                    trainer.logger.info("model imporved from {} to {}".format(self.last_val, item))
+                    trainer.save_checkpoint(meter.serialize())
+                    self.last_val = item
+            else:
+                if self.last_val < item:
+                    trainer.logger.info("model imporved from {} to {}".format(self.last_val, item))
+                    trainer.save_checkpoint(meter.serialize())
+                    self.last_val = item
+
+    def on_test_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
+        self.update("test", trainer, param, meter)
+
+    def on_eval_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
+        self.update("eval", trainer, param, meter)
+
+
+class TimingCheckpoint(TrainCallback):
+    def __init__(self, per_epoch):
+        self.per_epoch = per_epoch
+
+    def on_train_epoch_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
+        if param.eidx % self.per_epoch == 0 and param.eidx > 0:
+            trainer.save_keypoint(meter.serialize(), replacement=True)
+
+
+class BoardCallback(TrainCallback):
+    def __init__(self, unit="epoch", empty_mode="zero"):
+        """
+        :param unit: epoch or global_step
+        :param empty_mode: 'zero': default = 0 or 'ignore' :not record
+        """
+        self.watch_dict = dict(
+            train=dict(),
+            test=dict(),
+            eval=dict(),
+        )
+        self.unit = unit
+        self.empty_mode = empty_mode
+
+    def watch_scalars(self, mode, names_pair, tag):
+        """
+        like
+            watch_scalars("train", {"all_loss":"all","a_loss":"a"}, "losses") or
+            watch_scalars("train", [("all_loss","all"), ("a_loss","a")], "losses")
+
+        如果只有一对，那么调用 add_scalar
+        如果只有多对，那么调用 add_scalars
+        :param mode:
+        :param names_pair:
+        :param tag:
+        :return:
+        """
+        assert tag not in self.watch_dict[mode], "{} exists in {} watch dict".format(tag, mode)
+        self.watch_dict[mode][tag] = names_pair
+
+    def watch_scalar(self, mode, name, tag):
+        assert tag not in self.watch_dict[mode], "{} exists in {} watch dict".format(tag, mode)
+        self.watch_dict[mode][tag] = name
+
+    def _find_value(self, meter: Meter, key):
+        if isinstance(meter[key], AvgItem):
+            return meter[key].avg
+        elif isinstance(meter[key], NoneItem):
+            if self.empty_mode == "zero":
+                return 0
+            else:
+                return None
+        elif isinstance(meter[key], (str)):
+            warnings.warn("tensorboard scalar types can't be str, but meter.{} is".format(key))
+            return None
+        return meter[key]
+
+    def on_train_epoch_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
+        self.update(trainer,meter,param,"train")
+
+    def update(self,trainer,meter,param,mode):
+        from thexp.utils.generel_util import iter2pair
+        step = param.eidx if self.unit == "epoch" else param.global_step
+
+        for tag, names in self.watch_dict[mode].items():
+            if isinstance(names, str):
+                val = self._find_value(meter, names)
+                if val is not None:
+                    trainer.writter.add_scalar(tag, val, step)
+            else:
+                scalar_dict = {}
+                for k, v in iter2pair(names):
+                    val = self._find_value(meter, k)
+                    if val is not None:
+                        scalar_dict[v] = val
+                trainer.writter.add_scalars(tag, scalar_dict, step)
+
+    def on_eval_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
+        self.update(trainer,meter,param,"eval")
+
+    def on_test_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
+        self.update(trainer,meter,param,"test")
+
+
+class KeyErrorSave(TrainCallback):
+    priority = -1
+    def __init__(self,wait_input=False):
+        self.wait_input=wait_input
+
+    def on_first_exception(self, trainer: BaseTrainer, func, param: Params, e: BaseException, *args, **kwargs):
+        if isinstance(e,(KeyboardInterrupt)):
+            trainer.logger.info("KeyErrorSave trigged, save checkpoint")
+            trainer.save_keypoint({"mode":"KeyboardInterrupt"})
+
+            tp = "n"
+            if self.wait_input:
+                tp = input("continue train step? (y/other)")
+
+            if tp.lower() == "y":
+                return True

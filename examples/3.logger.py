@@ -31,7 +31,7 @@ logger = Logger()
 
 meter = Meter()
 meter.a = 3.13524635465
-meter.b = "long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;"
+meter.b = "long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;long text;"
 
 for i in range(100):
     logger.inline(meter,prefix="inline examples")

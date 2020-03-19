@@ -25,9 +25,9 @@ from ..utils import random
 
 class RndManager:
     """用于控制训练过程中的随机种子，保证数据集/"""
-    STATE_DATESET = "dataset" # 推荐在加载数据集前用，保证每次随机切分的数据集完全相同
-    STATE_MODEL = "model" # 推荐在初始化模型时候用，保证模型初始化参数完全相同
-    STATE_TRAIN_BEGIN = "begin" # 推荐在训练开始前用，保证每次训练的反向传播更新过程完全相同
+    STATE_DATESET = "dataset"  # 推荐在加载数据集前用，保证每次随机切分的数据集完全相同
+    STATE_MODEL = "model"  # 推荐在初始化模型时候用，保证模型初始化参数完全相同
+    STATE_TRAIN_BEGIN = "begin"  # 推荐在训练开始前用，保证每次训练的反向传播更新过程完全相同
     STATE_BREAK = "break"
 
     def __init__(self, save_dir):
@@ -47,14 +47,17 @@ class RndManager:
         with open(self._build_state_name(name), "rb") as f:
             return pickle.load(f)
 
-    def load_rnd_state(self, name):
+    def load_rnd_state(self, name, not_exist_save=False):
         stt = self.get_rnd_state(name)
         if stt is not None:
             random.set_state(stt)
             return True
+        elif not_exist_save:
+            self.save_rnd_state(name)
+            return True
         return False
 
-    def del_rnd_state(self,name):
+    def del_rnd_state(self, name):
         if self.have_rnd_state(name):
             os.remove(self._build_state_name(name))
 

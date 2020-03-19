@@ -52,7 +52,7 @@ def set_state(state_dict):
     np.random.set_state(state_dict["numpy"])
     torch.random.set_rng_state(state_dict["torch"])
     if torch.cuda.is_available():
-        if state_dict["torch.cuda"]:
+        if "torch.cuda" in state_dict:
             torch.cuda.set_rng_state(state_dict["torch.cuda"])
         else:
             import warnings

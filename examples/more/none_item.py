@@ -17,28 +17,19 @@
              
     to purchase a commercial license.
 """
-import sys
-sys.path.insert(0,"../")
-from thexp import __VERSION__
-print(__VERSION__)
 
+from thexp.base_classes.trickitems import NoneItem
 
-import time
-from thexp.frame import Logger,Saver
-from thexp.frame.experiment import exp
+none = NoneItem()
+assert none > 0
+assert none >= 0
+assert none < 0
+assert none <= 0
+assert none != 0
+assert none == None
+assert none is not None
+assert none/2 == 0.5
+assert none*2 == 2
+assert none+1 == 1
+assert none-1 == -1
 
-
-@exp.keycode()
-def train():
-    logger = Logger()
-    logger.add_log_dir(exp.hold_exp_part("log",[".log"]))
-    save = Saver(exp.hold_exp_part("save",[".ckpt",".pth"]))
-    for i in range(10):
-        for j in range(5):
-            save.save_checkpoint(j, {}, {})
-            time.sleep(0.2)
-            logger.info(i)
-
-
-exp.start_exp()
-train()

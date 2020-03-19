@@ -24,6 +24,7 @@ import json
 # from .trainer import BaseTrainer
 import os
 import sys
+import warnings
 from collections import Iterable, defaultdict
 from datetime import datetime
 from datetime import timedelta
@@ -131,7 +132,11 @@ class __Global:
             return self._local_info[item]
         elif item in self._glob_info:
             return self._glob_info[item]
+        else:
+            val = input("no params named {}, \ninput to update value(locally), or empty to raise Error:".format(item))
+            self.update("local", item, val)
         raise AttributeError(item)
+
 
 globs = __Global()
 
@@ -165,6 +170,7 @@ class Experiment:
         self.event_handler = ExperimentEventHandler()
         self.observer = Observer()
         self.snap_member = []
+        self.expparam = exp
         self.keycode(sys.modules["__main__"])
         atexit.register(self.end_exp)
         # self.exithook = gu.exithook()
@@ -194,8 +200,21 @@ class Experiment:
 
     def start_exp(self):
         self.observer.start()
-        for member in self.snap_member:
+        for member in self.expparam.snap_member:
+            if inspect.ismodule(member):
+                if not getattr(member, '__file__', None):
+                    warnings.warn('{!r} is a built-in module'.format(member))
+                    continue
+            if inspect.isclass(member):
+                if not hasattr(member, '__module__'):
+                    warnings.warn('{!r} is a built-in class'.format(member))
+                    continue
+                elif getattr(member, '__file__', None):
+                    warnings.warn('{!r} is a built-in class'.format(member))
+                    continue
+
             name = member.__name__
+
             code = inspect.getsource(member)
             fn = inspect.getfile(member)
             hash = gu.string_hash(code)
@@ -229,10 +248,24 @@ class Experiment:
 
         self.db.set(datekey, self.exp_info)
         print("\nexp info saved in {},key='{}'".format(self.dbfile, datekey))
+        print("\nexp results are in {}".format(self.exp_dir))
+        pp.pprint(self.exp_info)
 
     def snapshot(self, code, path):
         with open(path, "w", encoding="utf-8") as w:
             w.write(code)
+
+    def keycode(self, member=None):
+        return self.expparam.keycode(member)
+
+    def summary(self):
+        pp.pprint(self.exp_info)
+        pp.pprint(self.expparam)
+
+class ExpParam:
+    def __init__(self):
+        self.snap_member = []
+        self.params = {}
 
     def keycode(self, member=None):
         if member is not None:
@@ -245,15 +278,17 @@ class Experiment:
 
         return func
 
-    def summary(self):
-        pp.pprint(self.exp_info)
+    def __getitem__(self, item):
+        return self.params[item]
 
-    def __getattr__(self, item):
-        return self.glob[item]
+    def __setitem__(self, key, value):
+        self.params[key] = value
+
+exp = ExpParam()
 
 
 class ExperimentEventHandler(FileSystemEventHandler):
-    """用来获取试验过程中的模型保存和日志输出的变化 TODO """
+    """用来获取试验过程中的模型保存和日志输出的变化 """
 
     def __init__(self):
         self.file_dict = tree()

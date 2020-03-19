@@ -61,6 +61,8 @@ class BaseTrainer:
                 except BaseException as e:
                     _handles = [callback.on_exception(self, func, self.params, e, *args, **kwargs)
                                 for callback in _call_set]
+
+                    print(_handles)
                     if any(_handles):
                         return None
                     else:
@@ -137,6 +139,7 @@ class BaseTrainer:
             if self.train_epoch_toggle:
                 self.train_epoch_toggle = False
                 break
+
         return avgMeter
 
     def train_step(self, steps):
@@ -153,10 +156,18 @@ class BaseTrainer:
         self.train_batch(0, 0, 0, batch_data, self.params, self.device)
 
     def test(self):
-        return self.test_eval_logic(self.iter_test_dataloader(), self.params)
+        loader = self.iter_test_dataloader()
+        if loader is None:
+            self.logger.info("Have no test dataset, ignored test.")
+            return None
+        return self.test_eval_logic(loader, self.params)
 
     def eval(self):
-        return self.test_eval_logic(self.iter_eval_dataloader(), self.params)
+        loader = self.iter_eval_dataloader()
+        if loader is None:
+            self.logger.info("Have no eval dataset, ignored eval.")
+            return None
+        return self.test_eval_logic(loader, self.params)
 
     def _regist_databundler(self, key, val):
         assert isinstance(val, (DataBundler, DataLoader))
@@ -164,10 +175,13 @@ class BaseTrainer:
             val = DataBundler().add(val)
         self.databundler_dict[key] = val
 
-    def regist_databundler(self, train, eval, test):
-        self.regist_train_databundler(train)
-        self.regist_eval_databundler(eval)
-        self.regist_test_databundler(test)
+    def regist_databundler(self, train=None, eval=None, test=None):
+        if train is not None:
+            self.regist_train_databundler(train)
+        if eval is not None:
+            self.regist_eval_databundler(eval)
+        if test is not None:
+            self.regist_test_databundler(test)
 
     def regist_eval_databundler(self, eval):
         self._regist_databundler("eval", eval)
@@ -179,18 +193,18 @@ class BaseTrainer:
         self._regist_databundler("train", train)
 
     def iter_train_dataloader(self) -> DataBundler:
-        return self.databundler_dict["train"]
+        return self.databundler_dict.get("train",None)
 
     def iter_eval_dataloader(self) -> DataBundler:
-        return self.databundler_dict["eval"]
+        return self.databundler_dict.get("eval",None)
 
     def iter_test_dataloader(self) -> DataBundler:
-        return self.databundler_dict["tests"]
+        return self.databundler_dict.get("tests",None)
 
     def _load_checkpoint_dict(self, res, strict, ignore_optim):
         if res is None:
             return False
-        self.params.eidx = res["_eidx"]
+        self.params.eidx = res["_eidx"]+1
         self.params.idx = res["_idx"]
         self.params.global_step = res["_global_step"]
         self.load_state_dict(res, strict)
@@ -201,14 +215,14 @@ class BaseTrainer:
     def load_keypoint(self, epoch, strict=True, ignore_optim=False):
         res = self.saver.load_keypoint(epoch)
         if self._load_checkpoint_dict(res, strict, ignore_optim):
-            self.logger.info("checkpoint of {} epoch not found. Choice from:".format(epoch))
-            self.logger.info(self.saver.find_keypoints())
-        else:
-            self.logger.info("load keypoint of {} epoch. ")
+            self.logger.info("load keypoint. current = {}/{}.".format(self.params.eidx,self.params.epoch))
             extra = self.saver.load_checkpoint_info(epoch)
             if extra is not None:
                 self.logger.info("Extra info:")
                 self.logger.info(pp.pformat(extra))
+        else:
+            self.logger.info("checkpoint of {} epoch not found. Choice from:".format(epoch))
+            self.logger.info(self.saver.find_keypoints())
 
     def load_checkpoint(self, epoch, strict=True, byindex=False, ignore_optim=False, not_exist_ok=False):
         res = self.saver.load_checkpoint(epoch, byindex)
@@ -220,7 +234,7 @@ class BaseTrainer:
             self.logger.info("checkpoint of {} epoch not found. Choice from:".format(epoch))
             self.logger.info(self.saver.find_checkpoints())
         else:
-            self.logger.info("load checkpoint of {} epoch. ")
+            self.logger.info("load checkpoint of {} epoch. ".format(self.params.eidx))
             extra = self.saver.load_checkpoint_info(epoch, byindex)
             if extra is not None:
                 self.logger.info("Extra info:")
@@ -231,15 +245,21 @@ class BaseTrainer:
 
     def save_keypoint(self, extra_info=None, replacement=False):
         state_dict = self.checkpoint_dict()
-        self.saver.save_keypoint(state_dict["_eidx"], state_dict, extra_info, replacement)
+        fn = self.saver.save_keypoint(state_dict["_eidx"], state_dict, extra_info, replacement)
+        self.logger.info("save keypoint in {}".format(fn))
+        return fn
 
     def save_checkpoint(self, extra_info=None, replacement=False):
         state_dict = self.checkpoint_dict()
-        self.saver.save_checkpoint(state_dict["_eidx"], state_dict, extra_info, replacement)
+        fn = self.saver.save_checkpoint(state_dict["_eidx"], state_dict, extra_info, replacement)
+        self.logger.info("save checkpoint in {}".format(fn))
+        return fn
 
     def save_model(self, extra_info=None):
         state_dict = self.state_dict()
-        self.saver.save_model(self.params.eidx, state_dict, extra_info)
+        fn = self.saver.save_model(self.params.eidx, state_dict, extra_info)
+        self.logger.info("save model in {}".format(fn))
+        return fn
 
     def add_callback(self, callback):
         """
@@ -306,7 +326,7 @@ class BaseTrainer:
     def checkpoint_dict(self):
         res = self.state_dict()
         res.update(self.optim_state_dict())
-        res["_eidx"] = self.params.eidx + 1
+        res["_eidx"] = self.params.eidx
         res["_idx"] = self.params.idx
         res["_global_step"] = self.params.global_step
         return res

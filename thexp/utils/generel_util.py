@@ -96,3 +96,14 @@ class exithook():
 
     def exc_handler(self, exc_type, exc, *args):
         self.exception = exc
+
+def iter2pair(obj):
+    for k in obj:
+        if isinstance(obj,dict):
+            yield k, obj[k]
+        elif isinstance(k, (list, tuple)):
+            yield k[0], k[1]
+        elif isinstance(k, dict):
+            for kk, vv in k.items():
+                yield kk, vv
+

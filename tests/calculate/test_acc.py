@@ -17,28 +17,15 @@
              
     to purchase a commercial license.
 """
-import sys
-sys.path.insert(0,"../")
-from thexp import __VERSION__
-print(__VERSION__)
+
+import torch
+
+from thexp.calculate import accuracy as acc
 
 
-import time
-from thexp.frame import Logger,Saver
-from thexp.frame.experiment import exp
-
-
-@exp.keycode()
-def train():
-    logger = Logger()
-    logger.add_log_dir(exp.hold_exp_part("log",[".log"]))
-    save = Saver(exp.hold_exp_part("save",[".ckpt",".pth"]))
-    for i in range(10):
-        for j in range(5):
-            save.save_checkpoint(j, {}, {})
-            time.sleep(0.2)
-            logger.info(i)
-
-
-exp.start_exp()
-train()
+def test_classify():
+    labels = torch.tensor([0, 1, 2, 3])
+    preds = torch.tensor([[5, 4, 3, 2], [5, 4, 3, 2], [5, 4, 3, 2], [5, 4, 3, 2]], dtype=torch.float)
+    total, res = acc.classify(preds, labels, topk=(1, 2, 3, 4))
+    assert total == 4
+    assert res[0] == 1 and res[1] == 2 and res[2] == 3 and res[3] == 4,str(res)

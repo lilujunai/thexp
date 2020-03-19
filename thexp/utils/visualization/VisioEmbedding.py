@@ -17,28 +17,28 @@
              
     to purchase a commercial license.
 """
-import sys
-sys.path.insert(0,"../")
-from thexp import __VERSION__
-print(__VERSION__)
+
+import torch
 
 
-import time
-from thexp.frame import Logger,Saver
-from thexp.frame.experiment import exp
+class VisioEmbedding():
+    def __init__(self, writter, global_step=None, tag="default"):
+        self.writter = writter
+        self.global_step = global_step
+        self.tag = tag
+        self.mats = []
+        self.metadatas = []
+        self.label_imgs = []
 
+    def add_embedding(self, mat, metadata=None, label_img=None):
+        self.mats.append(mat)
+        self.metadatas.append(metadata)
+        self.label_imgs.append(label_img)
 
-@exp.keycode()
-def train():
-    logger = Logger()
-    logger.add_log_dir(exp.hold_exp_part("log",[".log"]))
-    save = Saver(exp.hold_exp_part("save",[".ckpt",".pth"]))
-    for i in range(10):
-        for j in range(5):
-            save.save_checkpoint(j, {}, {})
-            time.sleep(0.2)
-            logger.info(i)
+    def flush(self, max_len=None):
+        self.writter.add_embedding(torch.cat(self.mats[:max_len]),
+                                   torch.cat(self.metadatas[:max_len]),
+                                   self.label_imgs,
+                                   tag=self.tag,
+                                   global_step=self.global_step)
 
-
-exp.start_exp()
-train()

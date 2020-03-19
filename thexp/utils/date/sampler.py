@@ -23,18 +23,3 @@ from torch._utils import _accumulate
 from torch.utils.data.dataset import Subset
 
 
-def random_split_with_indices(dataset, lengths,indices=None):
-    r"""
-    Randomly split a dataset into non-overlapping new datasets of given lengths.
-
-    Arguments:
-        dataset (Dataset): Dataset to be split
-        lengths (sequence): lengths of splits to be produced
-    """
-    if sum(lengths) != len(dataset):
-        raise ValueError("Sum of input lengths does not equal the length of the input dataset!")
-    if indices is None:
-        indices = randperm(sum(lengths)).tolist()
-
-    return [Subset(dataset, indices[offset - length:offset]) for offset, length in
-            zip(_accumulate(lengths), lengths)], indices

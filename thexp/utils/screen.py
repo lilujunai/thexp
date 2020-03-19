@@ -160,9 +160,9 @@ class ScreenStr():
         if len(left) >= width:
             return left[:width]
 
-        offset = ScreenStr.cacu_offset(len(right) - (width) + 4)
+        offset = ScreenStr.cacu_offset(len(right) - (width))
 
-        offright = width + offset - len(margin)
+        offright = width - len(left) + offset - len(margin)
 
         left = left.decode("gbk")
         right = self._decode_sub(right, offset, offright)

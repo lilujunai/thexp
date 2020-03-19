@@ -17,28 +17,12 @@
              
     to purchase a commercial license.
 """
-import sys
-sys.path.insert(0,"../")
-from thexp import __VERSION__
-print(__VERSION__)
 
+from thexp.base_classes.tree import tree
 
-import time
-from thexp.frame import Logger,Saver
-from thexp.frame.experiment import exp
-
-
-@exp.keycode()
-def train():
-    logger = Logger()
-    logger.add_log_dir(exp.hold_exp_part("log",[".log"]))
-    save = Saver(exp.hold_exp_part("save",[".ckpt",".pth"]))
-    for i in range(10):
-        for j in range(5):
-            save.save_checkpoint(j, {}, {})
-            time.sleep(0.2)
-            logger.info(i)
-
-
-exp.start_exp()
-train()
+def test_tree():
+    tre = tree()
+    tre[1][2][3][4] = 5
+    assert tre[1][2][3][4] == 5
+    assert isinstance(tre[1][2][3],tree),"should be {}".format(type(tree))
+    assert isinstance(tre[1][1][0],tree),"should be {}".format(type(tree))

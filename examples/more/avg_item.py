@@ -17,28 +17,12 @@
              
     to purchase a commercial license.
 """
-import sys
-sys.path.insert(0,"../")
-from thexp import __VERSION__
-print(__VERSION__)
 
+from thexp.base_classes.trickitems import AvgItem
 
-import time
-from thexp.frame import Logger,Saver
-from thexp.frame.experiment import exp
+avg = AvgItem()
+avg.update(10/3)
+avg.update(10/3)
 
+print(avg)
 
-@exp.keycode()
-def train():
-    logger = Logger()
-    logger.add_log_dir(exp.hold_exp_part("log",[".log"]))
-    save = Saver(exp.hold_exp_part("save",[".ckpt",".pth"]))
-    for i in range(10):
-        for j in range(5):
-            save.save_checkpoint(j, {}, {})
-            time.sleep(0.2)
-            logger.info(i)
-
-
-exp.start_exp()
-train()
