@@ -18,12 +18,16 @@
     to purchase a commercial license.
 """
 
-from thexp.frame.experiment import globs
+from torchvision.datasets import cifar
 
-globs["nddatasets"] = "E:/Download/dataset"
+class CIFAR10(cifar.CIFAR10):
+    def __getitem__(self, index):
+        img, target = self.data[index], self.targets[index]
 
-print()
-globs.update("local","a",1)
-globs.list_config(True,True)
+        if self.transform is not None:
+            img = self.transform(img)
 
-print(globs.glob_fn)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target

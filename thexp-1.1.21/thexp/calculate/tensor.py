@@ -91,4 +91,3 @@ def cat_then_split(op,tensors:list):
 
     res = op(torch.cat(tensors)) # type: torch.Tensor
     return res.split_with_sizes([i.shape[0] for i in tensors])
-

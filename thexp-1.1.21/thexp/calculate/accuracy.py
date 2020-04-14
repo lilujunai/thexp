@@ -17,28 +17,30 @@
              
     to purchase a commercial license.
 """
-
 import torch
 
 
-class VisioEmbedding():
-    def __init__(self, writter, global_step=None, tag="default"):
-        self.writter = writter
-        self.global_step = global_step
-        self.tag = tag
-        self.mats = []
-        self.metadatas = []
-        self.label_imgs = []
+def classify(preds, labels, cacu_rate=False, topk=None):
+    """
+    用于分类的准确率
+    :param preds: [batch,logits]
+    :param labels: [labels,]
+    :param cacu_rate: 计算正确率而不是计数
+    :param topk: list(int) ，表明计算哪些topk
+    :return:
+        if cacu_rate:
+            [topk_rate,...]
+        else:
+            total, [topk_count,...]
+    """
+    if topk is None:
+        topk = (1,5)
+    k = topk
+    _, maxk = torch.topk(preds, max(*k), dim=-1)
+    total = labels.size(0)
+    test_labels = labels.view(-1, 1)  # reshape labels from [n] to [n,1] to compare [n,k]
 
-    def add_embedding(self, mat, metadata=None, label_img=None):
-        self.mats.append(mat.detach().cpu())
-        self.metadatas.append(metadata.detach().cpu())
-        self.label_imgs.append(label_img.detach().cpu())
-
-    def flush(self, max_len=None):
-        self.writter.add_embedding(torch.cat(self.mats[:max_len]),
-                                   torch.cat(self.metadatas[:max_len]),
-                                   self.label_imgs,
-                                   tag=self.tag,
-                                   global_step=self.global_step)
-
+    if cacu_rate:
+        return [(test_labels == maxk[:, 0:i]).sum().item() / total for i in k]
+    else:
+        return total, [(test_labels == maxk[:, 0:i]).sum().item() for i in k]

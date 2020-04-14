@@ -26,7 +26,15 @@ import numpy as np
 
 
 def get_consolo_width():
-    return shutil.get_terminal_size().columns
+    return shutil.get_terminal_size().columns-1
+
+def support_multiline():
+    if "jupyter_core" in sys.modules or shutil.get_terminal_size((0,0)).columns == 0:
+        return True
+    else:
+        return False
+
+
 
 
 class ScreenStr():
@@ -45,12 +53,14 @@ class ScreenStr():
 
     debug = False
     last_width = 0
-
+    multi_mode = support_multiline()
     def __init__(self, content="", leftoffset=0) -> None:
         self.content = content
         ScreenStr.left = leftoffset
 
     def __repr__(self) -> str:
+        if ScreenStr.multi_mode:
+            return self.content
         return self._screen_str()
 
     def tostr(self):

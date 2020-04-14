@@ -30,10 +30,6 @@ def listdir_by_time(dir_path):
     else:
         # os.path.getctime() 函数是获取文件最后创建时间
         dir_list = sorted(dir_list, key=lambda x: os.path.getatime(os.path.join(dir_path, x)), reverse=True)
-        # print(dir_list)
-
-        # for i in dir_list:
-        #     print(os.path.getctime(os.path.join(dir_path,i)),i)
         return dir_list
 
 

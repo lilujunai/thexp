@@ -38,7 +38,7 @@ class MyModel(nn.Module):
 from thexp.frame import Meter, Params, Trainer
 from thexp.frame.callbacks import TimingCheckpoint,KeyErrorSave
 class MyTrainer(Trainer):
-
+    # _call_backs = {"my_func"}
 
     def initial_callback(self):
         super().initial_callback()
@@ -83,6 +83,9 @@ class MyTrainer(Trainer):
 
         return meter
 
+
+    def my_func(self):
+        pass
 
 params = Params()
 params.epoch=20

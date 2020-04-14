@@ -16,23 +16,8 @@
             sailist@outlook.com
              
     to purchase a commercial license.
-
-用于
 """
 
-from ..frame import Params,Meter
-import torch
-from . import accuracy as acc
+from torchvision.datasets.mnist import MNIST
 
-class classify_logits:
-    def test_eval_logic(self, dataloader, param: Params):
-        with torch.no_grad():
-            count_dict = Meter()
-            for xs, labels in dataloader:
-                xs, labels = xs.to(self.device), labels.to(self.device)
-                preds = self.predict(xs)
-                total, topk_res = acc.classify(preds, labels, topk=param.topk)
-                count_dict["total"] += total
-                for i, topi_res in zip(param.topk, topk_res):
-                    count_dict[i] += topi_res
-        return count_dict
+# def mnist(root,download)

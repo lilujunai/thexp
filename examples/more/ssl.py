@@ -23,7 +23,7 @@ from thexp import globs
 from torchvision import datasets
 from thexp.utils.date.dataset import SemiDataset,ratio2length
 
-base = datasets.CIFAR10(globs["datasets"], train=True, download=False)
+base = datasets.CIFAR10(globs["nddatasets"], train=True, download=False)
 
 
 

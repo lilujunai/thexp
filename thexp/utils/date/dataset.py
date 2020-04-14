@@ -21,7 +21,7 @@ import torch
 from PIL import Image
 from torch import randperm
 from torch._utils import _accumulate
-from torch.utils.data.dataset import Dataset, T_co
+from torch.utils.data.dataset import Dataset
 from torch.utils.data.dataset import Subset
 
 
@@ -41,7 +41,7 @@ def random_split_with_seed(dataset, lengths, seed=0):
 
 def split_with_indices(dataset, lengths, indices):
     r"""
-    Randomly split a dataset into non-overlapping new datasets of given lengths.
+    Randomly split a dataset into non-overlapping new nddatasets of given lengths.
 
     Arguments:
         dataset (Dataset): Dataset to be split
@@ -61,7 +61,7 @@ class SemiDataset(Dataset):
         self.transform = transform
         self.target_transform = target_transform
 
-    def __getitem__(self, index: int) -> T_co:
+    def __getitem__(self, index: int):
         img, target = self.datas[index], self.targets[index]
         img = Image.fromarray(img)
 
@@ -75,17 +75,46 @@ class SemiDataset(Dataset):
 
     def __len__(self) -> int:
         return len(self.datas)
-    
+
     @staticmethod
-    def create_indice(self,*lengths,random=True):
+    def create_indice(self, *lengths, random=True):
         if random:
             indices = randperm(sum(lengths))
         else:
             indices = torch.arange(0, sum(lengths)).tolist()
         return indices
-    
 
-def ratio2length(total_len,*ratios):
+
+class SubsetWithTransform(Dataset):
+    def __init__(self, dataset, indices, transform=None, target_transform=None):
+        self.dataset = dataset
+        self.indices = indices
+        self.trasform = transform
+        self.target_transform = target_transform
+
+    def __getitem__(self, idx):
+
+        img, target = self.dataset[self.indices[idx]]
+        if self.trasform is not None:
+            img = self.trasform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target
+
+    def __len__(self):
+        return len(self.indices)
+
+
+def ratio2length(total_len, *ratios):
     assert sum(ratios) == 1
-    return [total_len*i for i in ratios]
-    
+    return [total_len * i for i in ratios]
+
+
+class HookMixin():
+    def on(self,*args,**kwargs):
+        pass
+
+
+

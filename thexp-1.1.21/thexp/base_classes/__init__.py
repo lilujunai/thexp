@@ -18,12 +18,3 @@
     to purchase a commercial license.
 """
 
-from thexp.frame.experiment import globs
-
-globs["nddatasets"] = "E:/Download/dataset"
-
-print()
-globs.update("local","a",1)
-globs.list_config(True,True)
-
-print(globs.glob_fn)

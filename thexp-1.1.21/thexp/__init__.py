@@ -18,12 +18,15 @@
     to purchase a commercial license.
 """
 
-from thexp.frame.experiment import globs
+__VERSION__ = "1.1.21"
 
-globs["nddatasets"] = "E:/Download/dataset"
+from .frame.databundler import DataBundler
+from .frame.experiment import ExperimentViewer, Experiment, globs
+from .frame.logger import Logger
+from .frame.meter import Meter, AvgMeter
+from .frame.params import Params
+from .frame.saver import Saver
+from .frame.trainer import Trainer
 
-print()
-globs.update("local","a",1)
-globs.list_config(True,True)
-
-print(globs.glob_fn)
+from .frame import callbacks
+from .utils import torch

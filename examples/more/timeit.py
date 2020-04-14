@@ -18,12 +18,15 @@
     to purchase a commercial license.
 """
 
-from thexp.frame.experiment import globs
+from thexp.utils.timeit import TimeIt
+import time
 
-globs["nddatasets"] = "E:/Download/dataset"
+if __name__ == '__main__':
+    t = TimeIt()
+    t.start()
+    for i in range(10):
+        time.sleep(0.1)
+        t.mark(i)
 
-print()
-globs.update("local","a",1)
-globs.list_config(True,True)
-
-print(globs.glob_fn)
+    t.end()
+    print(t.meter())

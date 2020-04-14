@@ -18,12 +18,11 @@
     to purchase a commercial license.
 """
 
-from thexp.frame.experiment import globs
-
-globs["nddatasets"] = "E:/Download/dataset"
-
-print()
-globs.update("local","a",1)
-globs.list_config(True,True)
-
-print(globs.glob_fn)
+from .meter import Meter,AvgMeter
+from .params import Params
+from .trainer import Trainer
+from .saver import Saver
+from .rndmanager import RndManager
+from .logger import Logger
+from .databundler import DataBundler
+from .experiment import ExperimentViewer,Experiment

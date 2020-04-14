@@ -37,15 +37,15 @@ from .params import Params
 from .plotter import Plotter
 from .rndmanager import RndManager
 from .saver import Saver
+from ..base_classes.metaclasses import Merge
 
 
-class BaseTrainer:
-    _ignore_call_back = {"model_dict", "optim_dict",
-                         "model_state_dict", "optim_state_dict",
-                         "create_checkpoint_dict", "create_checkpoint_dict",
-                         "iter_train_dataloader", "iter_eval_dataloader", "iter_test_dataloader",
-                         "predict", "preprocess",
-                         "add_callback"}
+class BaseTrainer(metaclass=Merge):
+    _call_backs = {
+        "train", "train_epoch", "train_step", "test", "eval", "train_on_batch",
+        "regist_databundler", "train_batch", "test_eval_logic", "predict",
+        "load_keypoint", "load_checkpoint", "load_model", "save_keypoint", "save_checkpoint", "save_model",
+    }
 
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)
@@ -62,7 +62,6 @@ class BaseTrainer:
                     _handles = [callback.on_exception(self, func, self.params, e, *args, **kwargs)
                                 for callback in _call_set]
 
-                    print(_handles)
                     if any(_handles):
                         return None
                     else:
@@ -81,7 +80,9 @@ class BaseTrainer:
         vars = dir(self)
         for name in vars:
             value = getattr(self, name)
-            if name.startswith("_"):
+            # if name.startswith("_"):
+            #     continue
+            if name not in self._call_backs:
                 continue
             if callable(value):
                 setattr(self, name, wrapper(value, self._callback_set))
@@ -102,8 +103,24 @@ class BaseTrainer:
     def initial_trainer(self, params: Params):
         pass
 
-    def initial_exp(self, exps_dir):
-        exp_dir = os.path.join(exps_dir, self.params.get_exp_name())
+    def initial_datasets(self, params: Params):
+        pass
+
+    def initial_models(self, params: Params):
+        pass
+
+    def initial_exp(self, *exps_dir):
+        """
+        will call:
+            self.initial_trainer(self.params)
+            self.initial_models(self.params)
+            self.initial_datasets(self.params)
+            self.initial_callback()
+
+        :param exps_dir:
+        :return:
+        """
+        exp_dir = os.path.join(*exps_dir, self.params.get_exp_name())
         self.experiment = Experiment(exp_dir)
         self.experiment.start_exp()
         self.logger = Logger()
@@ -114,8 +131,10 @@ class BaseTrainer:
         self.rnd = RndManager(self.experiment.hold_exp_part("rnd", exts=[".rnd"]))
         self.experiment.add_event_listener(self.plotter.dynamic_board, exts=[".bd"])
         self.writter = SummaryWriter(self.experiment.hold_exp_part("board", exts=[".bd"]), filename_suffix=".bd")
-        self.initial_callback()
         self.initial_trainer(self.params)
+        self.initial_models(self.params)
+        self.initial_datasets(self.params)
+        self.initial_callback()
 
     def train(self):
         params = self.params
@@ -193,18 +212,18 @@ class BaseTrainer:
         self._regist_databundler("train", train)
 
     def iter_train_dataloader(self) -> DataBundler:
-        return self.databundler_dict.get("train",None)
+        return self.databundler_dict.get("train", None)
 
     def iter_eval_dataloader(self) -> DataBundler:
-        return self.databundler_dict.get("eval",None)
+        return self.databundler_dict.get("eval", None)
 
     def iter_test_dataloader(self) -> DataBundler:
-        return self.databundler_dict.get("tests",None)
+        return self.databundler_dict.get("tests", None)
 
     def _load_checkpoint_dict(self, res, strict, ignore_optim):
         if res is None:
             return False
-        self.params.eidx = res["_eidx"]+1
+        self.params.eidx = res["_eidx"] + 1
         self.params.idx = res["_idx"]
         self.params.global_step = res["_global_step"]
         self.load_state_dict(res, strict)
@@ -215,7 +234,7 @@ class BaseTrainer:
     def load_keypoint(self, epoch, strict=True, ignore_optim=False):
         res = self.saver.load_keypoint(epoch)
         if self._load_checkpoint_dict(res, strict, ignore_optim):
-            self.logger.info("load keypoint. current = {}/{}.".format(self.params.eidx,self.params.epoch))
+            self.logger.info("load keypoint. current = {}/{}.".format(self.params.eidx, self.params.epoch))
             extra = self.saver.load_checkpoint_info(epoch)
             if extra is not None:
                 self.logger.info("Extra info:")
@@ -381,7 +400,10 @@ class Trainer(BaseTrainer):
         lc = LoggerCallback()
         lc.hook(self)
 
-    def initial_trainer(self, params: Params):
+    def initial_datasets(self, params: Params):
+        pass
+
+    def initial_models(self, params: Params):
         pass
 
     def predict(self, xs):
@@ -392,7 +414,3 @@ class Trainer(BaseTrainer):
 
     def test_eval_logic(self, dataloader, param: Params):
         pass
-
-
-
-
