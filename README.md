@@ -29,6 +29,10 @@ python -m pytest
 
 # Quick Start
 thexp 主要提供以下几个功能
+ - [超参数声明](#超参数声明)
+    - [基本使用](#基本使用)
+    - [自定义类](#自定义类)
+    - [命令行参数支持](#命令行参数支持)
  - [变量记录](#变量记录)
     - [格式化](#格式化)
     - [平均](#平均)
@@ -42,6 +46,86 @@ thexp 主要提供以下几个功能
  - [全局变量获取](#全局变量获取)
 
 > 下面所有的例子都位于[./examples](./examples)中
+
+## 超参数声明
+thexp.frame.params.Params 专注于记录各种超参数和配置变量，并通过Fire库提供便捷的命令行参数支持
+
+### 基本使用
+Params类默认带有device、epoch、eidx、idx、global_step等变量，主要用于配合trainer，如果需要有不带任何参数的，请使用`thexp.frame.params.BaseParams`
+最简单的使用方式：
+```python
+from thexp import Params
+
+params = Params()
+params.epoch = 400
+params.batch_size = 25
+print(params)
+```
+输出
+````bash
+Params[('epoch', 400),
+ ('eidx', 1),
+ ('idx', 0),
+ ('global_step', 0),
+ ('device', 'cpu'),
+ ('batch_size', 25)]
+````
+
+### 自定义类
+自定义Params类来实现默认值：
+```python
+from thexp import Params
+
+class BaseParams(Params):
+
+    def __init__(self):
+        super().__init__()
+        self.batch_size = 50
+        self.topk = (1,2,3,4)
+        self.optim_option(lr=0.009,moment=0.9) 
+        # 显示声明变量可以使用：
+        # self.optim = self.optim_option(lr=0.009,moment=0.9)
+
+params = BaseParams()
+...
+```
+输出：
+```bash
+>>> BaseParams[('epoch', 10),
+ ('eidx', 1),
+ ('idx', 0),
+ ('global_step', 0),
+ ('device', 'cpu'),
+ ('batch_size', 50),
+ ('topk', (1, 2, 3, 4)),
+ ('optim', {'lr': 0.009, 'moment': 0.9})]
+```
+
+### 命令行参数支持
+命令行参数支持（命令行参数同时支持多级变量定义，用'.'断开即可）：
+```python
+from thexp import Params
+
+params = Params()
+params.from_args()
+print(params)
+
+# 运行（注意optim.lr）：
+# python p.py --epoch=400 --optim.lr=0.01
+```
+```bash
+>>> 
+
+>>> Params[('epoch', 400),
+ ('eidx', 1),
+ ('idx', 0),
+ ('global_step', 0),
+ ('device', 'cpu'),
+ ('optim', {'lr': 0.001})]
+```
+
+
+
 
 ## 变量记录
 thexp.frame.meter.Meter 专注于记录变量（并用于日志输出），并且尽可能的不干扰训练逻辑：

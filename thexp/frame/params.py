@@ -24,6 +24,10 @@ from typing import Any
 import fire
 import torch
 
+class AttrDict(dict):
+    def __getattr__(self, item):
+        return self[item]
+
 
 class BaseParams:
     def __init__(self):
@@ -40,9 +44,13 @@ class BaseParams:
         key = str(key)
         self.__setattr__(key, value)
 
+
     def __getattr__(self, item):
         if item not in self._param_dict:
             raise AttributeError(item)
+        return self._param_dict[item]
+
+    def __getitem__(self, item):
         return self._param_dict[item]
 
     def __repr__(self):
@@ -90,9 +98,29 @@ class BaseParams:
     def from_args(self):
         def func(**kwargs):
             for k, v in kwargs.items():
-                self[k] = v
+                cur = self
+                ks = k.split(".")
+                for ka in ks[:-1]:
+                    if ka not in cur._param_dict:
+                        cur[ka] = AttrDict()
+                    cur = cur[ka]
+                cur[ks[-1]] = v
 
         fire.Fire(func)
+
+    def optim_option(self,lr=0.001,**kwargs):
+        """
+        创建优化器的参数，添加后会在实例中添加 "optim" 变量，包含传入的各个参数，在使用时：
+
+        self.optim_option(lr=0.001,moment=0.9,...)
+        SGD(param=...,**param.optim)
+        """
+        optim = AttrDict()
+        optim["lr"] = lr
+        for k,v in kwargs.items():
+            optim[k] = v
+        self.optim = optim
+        return optim
 
 
 class Params(BaseParams):
@@ -103,6 +131,9 @@ class Params(BaseParams):
         self.idx = 0
         self.global_step = 0
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+
+
 
 
 if __name__ == '__main__':
