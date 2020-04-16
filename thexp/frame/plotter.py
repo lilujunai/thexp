@@ -170,10 +170,15 @@ class Reporter():
             for k in self.plot_dicts:
                 self.plot_dict = self.plot_dicts[k]
 
-    def report(self, every=20):
+    def report(self, every=20,otherinfo=None):
+        every = max(every,1)
+
         from thexp.utils.markdown_writer import Markdown
         md = Markdown()
         md.add_title(curent_date("%y-%m-%d-%H:%M:%S"))
+        if otherinfo is not None:
+            md.extends(otherinfo)
+
         for k, v in self.plot_dict.items():
             md.add_title(k, level=2)
             if "fn" in v:

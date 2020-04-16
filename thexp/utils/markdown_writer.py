@@ -92,7 +92,7 @@ class Markdown():
         self.lines = []
 
     def add_title(self, title, level=1):
-        self.lines.append("{} {}\n".format("#" * level, title))
+        self.lines.append("\n{} {}\n".format("#" * level, title))
         return self
 
     def add_text(self, text):
@@ -147,6 +147,12 @@ class Markdown():
 
     @contextmanager
     def parameter(self):
+        self.lines.append("\n\n")
+        yield self  # type:Markdown
+        self.lines.append("\n\n")
+
+    @contextmanager
+    def quote(self):
         self.lines.append("\n\n")
         md = Markdown()
         yield md  # type:Markdown

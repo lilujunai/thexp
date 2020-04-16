@@ -421,15 +421,31 @@ class AutoReport(TrainCallback):
             trainer.reporter.add_scalar(v, param.eidx, k)
 
     def on_first_exception(self, trainer: BaseTrainer, func, param: Params, e: BaseException, *args, **kwargs):
+        if param.eidx <=2:
+            return
+
         fn = trainer.reporter.savefig()
         trainer.reporter.savearr()
         trainer.logger.info("Figs and pks saved in \n\t{}".format(fn))
-        fn = trainer.reporter.report(param.eidx // 20)
+        from thexp.utils.markdown_writer import Markdown
+        md = Markdown()
+        with md.code() as code: # type:Markdown
+            code.add_line(str(param))
+
+        with md.quote() as quote:
+            quote.add_text("Early Stoped because of **{}**".format(e.__class__.__name__))
+
+        fn = trainer.reporter.report(param.eidx // 20,otherinfo=md)
         trainer.logger.info("Report saved in \n\t{}".format(fn))
 
     def on_train_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
         fn = trainer.reporter.savefig()
         trainer.reporter.savearr()
         trainer.logger.info("Figs and pks saved in \n\t{}".format(fn))
-        fn = trainer.reporter.report(param.eidx // 20)
+        from thexp.utils.markdown_writer import Markdown
+        md = Markdown()
+        with md.quote() as quote:  # type:Markdown
+            quote.add_text(str(param))
+
+        fn = trainer.reporter.report(param.eidx // 20, otherinfo=md)
         trainer.logger.info("Report saved in \n\t{}".format(fn))

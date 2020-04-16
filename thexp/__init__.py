@@ -18,7 +18,7 @@
     to purchase a commercial license.
 """
 
-__VERSION__ = "1.2.0"
+__VERSION__ = "1.2.1"
 
 from .frame.databundler import DataBundler
 from .frame.experiment import ExperimentViewer, Experiment, globs
