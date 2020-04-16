@@ -18,15 +18,19 @@
     to purchase a commercial license.
 """
 
-__VERSION__ = "1.2.0"
+from thexp.frame.plotter import Reporter
 
-from .frame.databundler import DataBundler
-from .frame.experiment import ExperimentViewer, Experiment, globs
-from .frame.logger import Logger
-from .frame.meter import Meter, AvgMeter
-from .frame.params import Params
-from .frame.saver import Saver
-from .frame.trainer import Trainer
+reporter = Reporter("./experiment")
 
-from .frame import callbacks
-from .utils import torch
+for i in range(100):
+    reporter.add_scalar(i**2,i,"tw")
+    reporter.add_scalar(i**3,i,"twa")
+
+reporter.savefig()
+reporter.savearr()
+
+for i in range(100):
+    reporter.add_scalar(i ** 2, i, "tw")
+    reporter.add_scalar(i ** 3, i, "twa")
+
+reporter.report()

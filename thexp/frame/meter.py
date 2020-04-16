@@ -20,6 +20,7 @@
 from collections import OrderedDict
 from typing import Any
 
+import numpy as np
 import torch
 
 from ..base_classes.trickitems import AvgItem, NoneItem
@@ -122,6 +123,34 @@ class Meter:
         else:
             return self._param_dict[item]
 
+    def items(self):
+        for k, v in self._param_dict.items():
+            yield k, v
+
+    def array_items(self):
+        for k, v in self._param_dict.items():
+            if isinstance(v, (int, float, torch.Tensor, np.ndarray)):
+                yield k, v
+
+    def numeral_items(self):
+        """纯可被记录的数字"""
+        for k, v in self._param_dict.items():
+            if isinstance(v, (int, float)):
+                yield k, v
+            elif isinstance(v, torch.Tensor):
+                try:
+                    yield k, v.detach().cpu().item()
+                except:
+                    continue
+            elif isinstance(v, np.ndarray):
+                try:
+                    yield k, v.item()
+                except:
+                    continue
+
+    def __iter__(self):
+        return iter(self._param_dict)
+
     def serialize(self):
         log_dict = OrderedDict()
         for k, v in self._param_dict.items():
@@ -186,3 +215,28 @@ class AvgMeter(Meter):
                 v = self._format_dict[k](v)
             log_dict[k] = v
         return log_dict
+
+    def array_items(self):
+        for k, v in self._param_dict.items():
+            if isinstance(v, (int, float, torch.Tensor, np.ndarray)):
+                yield k, v
+            elif isinstance(v, AvgItem):
+                yield k, v.avg
+
+    def numeral_items(self):
+        """纯可被记录的数字"""
+        for k, v in self._param_dict.items():
+            if isinstance(v, (int, float)):
+                yield k, v
+            elif isinstance(v, torch.Tensor):
+                try:
+                    yield k, v.detach().cpu().item()
+                except:
+                    continue
+            elif isinstance(v, np.ndarray):
+                try:
+                    yield k, v.item()
+                except:
+                    continue
+            elif isinstance(v, AvgItem):
+                yield k, v.avg

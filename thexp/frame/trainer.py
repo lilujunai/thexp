@@ -34,7 +34,7 @@ from .experiment import Experiment
 from .logger import Logger
 from .meter import AvgMeter
 from .params import Params
-from .plotter import Plotter
+from .plotter import Reporter
 from .rndmanager import RndManager
 from .saver import Saver
 from ..base_classes.metaclasses import Merge
@@ -126,10 +126,10 @@ class BaseTrainer(metaclass=Merge):
         self.logger = Logger()
         self.logger.add_log_dir(self.experiment.hold_exp_part("logs", exts=[".log"]))
         self.saver = Saver(self.experiment.hold_exp_part("modules", exts=[".pth", ".json"]))
-        self.plotter = Plotter(self.experiment.hold_exp_part("plot", exts=[".eps", ".jpeg", ".jpg",
+        self.reporter = Reporter(self.experiment.hold_exp_part("plot", exts=[".eps", ".jpeg", ".jpg",
                                                                            ".pdf", ".png", ".svg", ".tif", ".tiff"]))
         self.rnd = RndManager(self.experiment.hold_exp_part("rnd", exts=[".rnd"]))
-        self.experiment.add_event_listener(self.plotter.dynamic_board, exts=[".bd"])
+        # self.experiment.add_event_listener(self.plotter.dynamic_board, exts=[".bd"])
         self.writter = SummaryWriter(self.experiment.hold_exp_part("board", exts=[".bd"]), filename_suffix=".bd")
         self.initial_trainer(self.params)
         self.initial_models(self.params)

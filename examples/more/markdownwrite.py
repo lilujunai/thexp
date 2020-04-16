@@ -18,16 +18,22 @@
     to purchase a commercial license.
 """
 
-from torch.optim.adadelta import Adadelta
-from torch.optim.adagrad import Adagrad
-from torch.optim.adam import Adam
-from torch.optim.adamax import Adamax
-from torch.optim.adamw import AdamW
-from torch.optim.asgd import ASGD
-from torch.optim.lbfgs import LBFGS
-from torch.optim.optimizer import Optimizer
-from torch.optim.rmsprop import RMSprop
-from torch.optim.rprop import Rprop
-from torch.optim.sgd import SGD
-from torch.optim.sparse_adam import SparseAdam
-from torch.optim import adam,adamw,adamax,adagrad,adadelta,asgd,sparse_adam,sgd,lr_scheduler,lbfgs,optimizer,rmsprop,rprop
+from thexp.utils.markdown_writer import Markdown
+
+if __name__ == '__main__':
+    md = Markdown()
+    md.add_title("report of exp")
+    md.add_title("All loss report")
+    md.add_table([[1, 2, 3], [4, 5, 6]])
+    md.add_text("Today alisjoialn")
+    md.add_url("www.baidu.com", "baidu")
+    md.add_bold("aoisjdoij")
+    md.add_picture("ww.bia", "ada", True)
+
+    md.add_code("""
+    print(asdas)
+    for i in range():
+        print(1)
+    """)
+
+    print(md)

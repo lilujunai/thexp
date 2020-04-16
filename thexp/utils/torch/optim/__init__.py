@@ -18,15 +18,17 @@
     to purchase a commercial license.
 """
 
-__VERSION__ = "1.2.0"
 
-from .frame.databundler import DataBundler
-from .frame.experiment import ExperimentViewer, Experiment, globs
-from .frame.logger import Logger
-from .frame.meter import Meter, AvgMeter
-from .frame.params import Params
-from .frame.saver import Saver
-from .frame.trainer import Trainer
-
-from .frame import callbacks
-from .utils import torch
+from torch.optim.adadelta import Adadelta
+from torch.optim.adagrad import Adagrad
+from torch.optim.adam import Adam
+from torch.optim.adamax import Adamax
+from torch.optim.adamw import AdamW
+from torch.optim.asgd import ASGD
+from torch.optim.lbfgs import LBFGS
+from torch.optim.optimizer import Optimizer
+from torch.optim.rmsprop import RMSprop
+from torch.optim.rprop import Rprop
+from torch.optim.sgd import SGD
+from torch.optim.sparse_adam import SparseAdam
+from torch.optim import adam,adamw,adamax,adagrad,adadelta,asgd,sparse_adam,sgd,lr_scheduler,lbfgs,optimizer,rmsprop,rprop

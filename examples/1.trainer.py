@@ -47,7 +47,8 @@ class MyTrainer(Trainer):
 
         KeyErrorSave(True).hook(self)
 
-
+        from thexp.frame.callbacks import AutoReport
+        AutoReport().hook(self)
 
     def initial_trainer(self,params:Params):
         from torch.optim import SGD
@@ -96,8 +97,10 @@ trainer = MyTrainer(params)
 trainer.initial_exp("./experiment")
 
 trainer.train()
-trainer.load_keypoint(4)
-trainer.train()
+
+
+# trainer.load_keypoint(4)
+# trainer.train()
 
 # trainer.save_checkpoint()
 # trainer.save_keypoint()

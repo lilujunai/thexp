@@ -65,7 +65,6 @@ class BaseCallback():
                 else:
                     return res
 
-
             return on_exception
 
         self.on_exception = ecp_wrap(self.on_exception)
@@ -233,7 +232,6 @@ class LoggerCallback(TrainCallback):
         if meter is None:
             meter = ""
         else:
-
             if self.avg:
                 self.meter.update(meter)
                 meter = self.meter
@@ -355,9 +353,9 @@ class BoardCallback(TrainCallback):
         return meter[key]
 
     def on_train_epoch_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
-        self.update(trainer,meter,param,"train")
+        self.update(trainer, meter, param, "train")
 
-    def update(self,trainer,meter,param,mode):
+    def update(self, trainer, meter, param, mode):
         from thexp.utils.generel_util import iter2pair
         step = param.eidx if self.unit == "epoch" else param.global_step
 
@@ -375,21 +373,22 @@ class BoardCallback(TrainCallback):
                 trainer.writter.add_scalars(tag, scalar_dict, step)
 
     def on_eval_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
-        self.update(trainer,meter,param,"eval")
+        self.update(trainer, meter, param, "eval")
 
     def on_test_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
-        self.update(trainer,meter,param,"test")
+        self.update(trainer, meter, param, "test")
 
 
 class KeyErrorSave(TrainCallback):
     priority = -1
-    def __init__(self,wait_input=False):
-        self.wait_input=wait_input
+
+    def __init__(self, wait_input=False):
+        self.wait_input = wait_input
 
     def on_first_exception(self, trainer: BaseTrainer, func, param: Params, e: BaseException, *args, **kwargs):
-        if isinstance(e,(KeyboardInterrupt)):
+        if isinstance(e, (KeyboardInterrupt)):
             trainer.logger.info("KeyErrorSave trigged, save checkpoint")
-            trainer.save_keypoint({"mode":"KeyboardInterrupt"})
+            trainer.save_keypoint({"mode": "KeyboardInterrupt"})
 
             tp = "n"
             if self.wait_input:
@@ -399,16 +398,38 @@ class KeyErrorSave(TrainCallback):
                 return True
 
 
-
 class CUDAErrorHold(TrainCallback):
     priority = -1
-    def __init__(self,wait_input=False):
-        self.wait_input=wait_input
+
+    def __init__(self, wait_input=False):
+        self.wait_input = wait_input
+
     def on_first_exception(self, trainer: BaseTrainer, func, param: Params, e: BaseException, *args, **kwargs):
-        if isinstance(e,(RuntimeError)):
+        if isinstance(e, (RuntimeError)):
             if "cuda" in str(e).lower():
                 trainer.logger.info("CUDA Error trigged, enter to continue or type any to exit")
                 tp = input("enter to continue or any other type to exit?")
 
                 if len(tp.strip()) == 0:
                     return True
+
+
+class AutoReport(TrainCallback):
+
+    def on_train_epoch_end(self, trainer: BaseTrainer, func, param: Params, meter: AvgMeter, *args, **kwargs):
+        for k, v in meter.numeral_items():
+            trainer.reporter.add_scalar(v, param.eidx, k)
+
+    def on_first_exception(self, trainer: BaseTrainer, func, param: Params, e: BaseException, *args, **kwargs):
+        fn = trainer.reporter.savefig()
+        trainer.reporter.savearr()
+        trainer.logger.info("Figs and pks saved in \n\t{}".format(fn))
+        fn = trainer.reporter.report(param.eidx // 20)
+        trainer.logger.info("Report saved in \n\t{}".format(fn))
+
+    def on_train_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
+        fn = trainer.reporter.savefig()
+        trainer.reporter.savearr()
+        trainer.logger.info("Figs and pks saved in \n\t{}".format(fn))
+        fn = trainer.reporter.report(param.eidx // 20)
+        trainer.logger.info("Report saved in \n\t{}".format(fn))
