@@ -1,4 +1,4 @@
-thexp是对pytorch的一个高级封装，专门用于简化实验流程，从而可以专注于内容本身。
+thexp 是对pytorch的一个高级封装，专门用于简化实验流程，从而可以专注于内容本身。
 
 # thexp（TorchExperiment）
 
@@ -468,10 +468,8 @@ print(globs.glob_fn)
  - [ ] utils：添加一些更多的trick或torch操作，这个我用到了就会不断向上添加的
  - [x] （持续更新...）[thexp-implement](https://github.com/sailist/thexp-implement)：以后复现各种模型我会统一用这个框架来复现，争取让每一个我过手的模型都简洁清晰2333
  - [x] （2020年3月11日）全局变量：利用experiment来实现全局变量，比如数据集啊，保存根路径啊之类的
+ - [ ] 考虑Trainer多继承时候的params分配问题，方便Trainer能够更好的通过多继承关系组织起来  
 
-## 低优先级
- - [ ] 任务队列？在显存不够的时候，一个试验跑完了另一个试验跑，类似这样的...
- 
  
 ## 细节记录
 
@@ -481,3 +479,4 @@ print(globs.glob_fn)
 
 - 2020年3月10日：1.0.1：初步完成所有的框架
 - 2020年3月11日：使用的过程中出了一些bug，修改了一下，现在正在用来跑我的试验，舒服了...
+- 2020年4月16日：为便于试验记录，新增reporter和相应callback AutoReport

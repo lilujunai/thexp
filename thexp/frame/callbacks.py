@@ -420,32 +420,26 @@ class AutoReport(TrainCallback):
         for k, v in meter.numeral_items():
             trainer.reporter.add_scalar(v, param.eidx, k)
 
-    def on_first_exception(self, trainer: BaseTrainer, func, param: Params, e: BaseException, *args, **kwargs):
-        if param.eidx <=2:
-            return
-
+    def report(self, trainer, param, e=None):
         fn = trainer.reporter.savefig()
         trainer.reporter.savearr()
         trainer.logger.info("Figs and pks saved in \n\t{}".format(fn))
         from thexp.utils.markdown_writer import Markdown
         md = Markdown()
-        with md.code() as code: # type:Markdown
+        with md.code() as code:  # type:Markdown
             code.add_line(str(param))
 
-        with md.quote() as quote:
-            quote.add_text("Early Stoped because of **{}**".format(e.__class__.__name__))
-
-        fn = trainer.reporter.report(param.eidx // 20,otherinfo=md)
-        trainer.logger.info("Report saved in \n\t{}".format(fn))
-
-    def on_train_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
-        fn = trainer.reporter.savefig()
-        trainer.reporter.savearr()
-        trainer.logger.info("Figs and pks saved in \n\t{}".format(fn))
-        from thexp.utils.markdown_writer import Markdown
-        md = Markdown()
-        with md.quote() as quote:  # type:Markdown
-            quote.add_text(str(param))
+        if e is not None:
+            with md.quote() as quote:
+                quote.add_text("Early Stoped because of **{}**".format(e.__class__.__name__))
 
         fn = trainer.reporter.report(param.eidx // 20, otherinfo=md)
         trainer.logger.info("Report saved in \n\t{}".format(fn))
+
+    def on_first_exception(self, trainer: BaseTrainer, func, param: Params, e: BaseException, *args, **kwargs):
+        if param.eidx <= 2:
+            return
+        self.report(trainer, param, e)
+
+    def on_train_end(self, trainer: BaseTrainer, func, param: Params, meter: Meter, *args, **kwargs):
+        self.report(trainer, param)
