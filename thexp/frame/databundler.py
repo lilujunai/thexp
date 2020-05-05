@@ -160,6 +160,6 @@ class DataBundler:
         return bundler
 
 
-    def __str__(self):
+    def __repr__(self):
         from pprint import pformat
         return pformat(self.len_dict())

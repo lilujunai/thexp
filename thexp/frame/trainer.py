@@ -17,6 +17,8 @@
              
     to purchase a commercial license.
 """
+import pprint as pp
+
 import bisect
 import os
 import pprint as pp
@@ -134,6 +136,9 @@ class BaseTrainer(metaclass=Merge):
         self.initial_trainer(self.params)
         self.initial_models(self.params)
         self.initial_datasets(self.params)
+
+        self.logger.info("initial datasets\n{}".format(pp.pformat(self.databundler_dict)))
+
         self.initial_callback()
 
     def train(self):
@@ -239,6 +244,7 @@ class BaseTrainer(metaclass=Merge):
             if extra is not None:
                 self.logger.info("Extra info:")
                 self.logger.info(pp.pformat(extra))
+                return extra
         else:
             self.logger.info("checkpoint of {} epoch not found. Choice from:".format(epoch))
             self.logger.info(self.saver.find_keypoints())
@@ -258,6 +264,7 @@ class BaseTrainer(metaclass=Merge):
             if extra is not None:
                 self.logger.info("Extra info:")
                 self.logger.info(pp.pformat(extra))
+                return extra
 
     def load_model(self, val, strict=True):
         self.load_state_dict(self.saver.load_model(val), strict)
@@ -295,21 +302,49 @@ class BaseTrainer(metaclass=Merge):
 
         if msg is not None:
             return False
-
         bisect.insort(self._callback_set, callback)
         self._callback_name_set.add(cb_name)
+
+        callback._trainer = self
         callback.on_hooked(self, self.params)
+        self.logger.info("{} hooked on {}.".format(callback, self))
         return True
 
+    def reset_callback(self,callback):
+        self.remove_callback(callback.__class__)
+        return self.add_callback(callback)
+
     def remove_callback(self, callback):
+        """
+
+        :param callback: str / class / callback instance
+        :return:
+        """
         msg = None
+        from .callbacks import BaseCallback
+
+        if issubclass(callback,BaseCallback):
+            for cb in self._callback_set:
+                if cb.__class__.__name__ == callback.__name__:
+                    callback = cb
+                    break
+
+        if isinstance(callback,str):
+            for cb in self._callback_set:
+                if cb.__class__.__name__ == callback:
+                    callback = cb
+                    break
+
         if callback not in self._callback_set:
             return False
 
         cb_name = callback.__class__.__name__
         self._callback_set.remove(callback)
         self._callback_name_set.remove(cb_name)
+        self.logger.info("{} unhooked from {}.".format(callback, self))
         return True
+
+
 
     '''module和optim的一部分方法集成'''
 
@@ -392,6 +427,9 @@ class BaseTrainer(metaclass=Merge):
 
 
 class Trainer(BaseTrainer):
+    """
+    试验如何管理：git + 序列化参数 + 训练时间图关联
+    """
     def initial_callback(self):
         from .callbacks import EvalCallback, LoggerCallback
         ec = EvalCallback(1, 5)

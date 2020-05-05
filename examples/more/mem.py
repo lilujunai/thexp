@@ -18,16 +18,7 @@
     to purchase a commercial license.
 """
 
-from thexp.frame.experiment import globs
 
-globs["nddatasets"] = "E:/Download/dataset"
+from thexp.calculate.memory import pin
 
-globs.time = 0
-
-print()
-globs.update("local","a",1)
-globs.list_config(True,True)
-
-
-
-# print(globs.glob_fn)
+print(pin(50000,50000,dtype="bool",format=True))

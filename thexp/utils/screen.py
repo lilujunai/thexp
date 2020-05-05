@@ -111,6 +111,16 @@ class ScreenStr():
         a = ScreenStr.a
         b = h / k
         period = 2 * (a + b)
+        return 0
+        # TODO
+        """
+        
+File "/home/yanghaozhe/.local/lib/python3.5/site-packages/thexp/utils/screen.py", line 173, in _screen_str
+offset = ScreenStr.cacu_offset(len(right) - (width))
+File "/home/yanghaozhe/.local/lib/python3.5/site-packages/thexp/utils/screen.py", line 116, in cacu_offset
+h * ((a + b) <= (t % period) < (2 * a + b)) + \
+ZeroDivisionError: float modulo
+        """
 
         offset = ((t % period) - a) * k * (a <= (t % period) < (a + b)) + \
                  h * ((a + b) <= (t % period) < (2 * a + b)) + \

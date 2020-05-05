@@ -45,6 +45,9 @@ class MyTrainer(Trainer):
         tc = TimingCheckpoint(2)
         tc.hook(self)
 
+        tc = TimingCheckpoint(3)
+        self.reset_callback(tc)
+
         KeyErrorSave(True).hook(self)
 
         from thexp.frame.callbacks import AutoReport

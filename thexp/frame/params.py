@@ -30,6 +30,7 @@ class AttrDict(dict):
 
 
 class BaseParams:
+    """TODO 将build_exp_name 的前缀单独放，然后参数放子目录"""
     def __init__(self):
         self._param_dict = OrderedDict()
         self._exp_name = None
@@ -55,6 +56,17 @@ class BaseParams:
 
     def __repr__(self):
         return "{}".format(self.__class__.__name__) + pp.pformat([(k, v) for k, v in self._param_dict.items()])
+
+    def __delattr__(self, name: str) -> None:
+        if name.startswith("_"):
+            super().__delattr__(name)
+        else:
+            self._param_dict.pop(name)
+
+    def __delitem__(self, key):
+        key = str(key)
+        self.__delattr__(key)
+
 
     def _can_in_dir_name(self, obj):
         for i in [int, float, str, bool]:
@@ -95,7 +107,10 @@ class BaseParams:
         assert self._exp_name is not None, "run build_exp_name() before get_exp_name()"
         return self._exp_name
 
+    # TODO 添加grid_search() 方法 for params in params.grid_search():
+    # TODO  获取试验目录是否应该在Params类中获取？思考一下
     def from_args(self):
+        # TODO 添加如果不是已有参数或类型不一致时报警告的操作
         def func(**kwargs):
             for k, v in kwargs.items():
                 cur = self
@@ -119,8 +134,15 @@ class BaseParams:
         optim["lr"] = lr
         for k,v in kwargs.items():
             optim[k] = v
-        self.optim = optim
         return optim
+
+    def items(self):
+        for k,v in self._param_dict.items():
+            yield k,v
+
+    def keys(self):
+        for k in self._param_dict:
+            yield k
 
 
 class Params(BaseParams):
@@ -131,10 +153,12 @@ class Params(BaseParams):
         self.idx = 0
         self.global_step = 0
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
-
+        self.optim = self.optim_option(lr=0.01)
+        del self.optim
 
 
 
 if __name__ == '__main__':
-    print(Params())
+    pass
+
+

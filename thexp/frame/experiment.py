@@ -33,6 +33,7 @@ from typing import Any
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
+from thexp.frame.params import BaseParams
 from ..utils import generel_util as gu
 from ..utils.pickledb import PickleDB
 
@@ -41,7 +42,7 @@ import pprint as pp
 
 from ..base_classes.tree import tree
 
-
+# TODO 添加获取临时输出目录、试验记录目录、当前项目目录的方法/属性
 class __Global:
     """global var"""
 
@@ -65,10 +66,11 @@ class __Global:
         self._glob_fn = os.path.join(exp_dir, "config.json")
         self._local_fn = self.check_local_dir_exists()
 
+        self._prog_info = {}
         self._glob_info = self.load(self.glob_fn)
         self._local_info = self.load(self._local_fn)
 
-    def list_config(self, glob=True, local=True):
+    def list_config(self, glob=True, local=True, prog=False):
         if glob:
             print("global:")
             pp.pprint(self.load(self.glob_fn))
@@ -76,6 +78,10 @@ class __Global:
         if local:
             print("local:")
             pp.pprint(self.load(self.local_fn))
+
+        if prog:
+            print("prog:")
+            pp.pprint(self._prog_info)
 
     def update(self, mode, name, val):
         if mode == "global":
@@ -128,6 +134,8 @@ class __Global:
     def __getitem__(self, item):
         if item.startswith("_"):
             raise AttributeError(item)
+        if item in self._prog_info:
+            return self._prog_info[item]
         if item in self._local_info:
             return self._local_info[item]
         elif item in self._glob_info:
@@ -136,6 +144,22 @@ class __Global:
             val = input("no params named {}, \ninput to update value(locally), or empty to raise Error:".format(item))
             self.update("local", item, val)
         raise AttributeError(item)
+
+    def __setitem__(self, key, value):
+        self._prog_info[key] = value
+
+    def __getattr__(self, item):
+        return self.__getitem__(item)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name.startswith("_"):
+            super().__setattr__(name, value)
+        else:
+            self._prog_info[name] = value
+
+    def merge_params(self, params: BaseParams):
+        for k, v in params.items():
+            self[k] = v
 
 
 globs = __Global()
@@ -148,6 +172,16 @@ class Experiment:
     def dbfile(self):
         dbfile = os.path.join(self.dbpath, self.dbfilename)
         return os.path.normpath(dbfile)
+    @property
+    def bakdbfile(self):
+        i = 0
+        tmpfile = os.path.join(self.dbpath, "{}-{}".format(i,self.dbfilename))
+        while os.path.exists(tmpfile):
+            i+=1
+            tmpfile = os.path.join(self.dbpath, "{}-{}".format(i,self.dbfilename))
+
+        return os.path.normpath(tmpfile)
+
 
     def __init__(self, exps_dir=None, dbfilename=None, dbpath=None):
         if dbfilename is None:
@@ -165,7 +199,11 @@ class Experiment:
         self.exp_dir = exps_dir
         os.makedirs(self.exp_dir, exist_ok=True)
         self.glob = globs
-        self.db = PickleDB(self.dbfile, auto_dump=True)
+        try:
+            self.db = PickleDB(self.dbfile, auto_dump=True)
+        except:
+            os.rename(self.dbfile,self.bakdbfile)
+            self.db = PickleDB(self.dbfile, auto_dump=True)
 
         self.event_handler = ExperimentEventHandler()
         self.observer = Observer()
@@ -262,6 +300,7 @@ class Experiment:
         pp.pprint(self.exp_info)
         pp.pprint(self.expparam)
 
+
 class ExpParam:
     def __init__(self):
         self.snap_member = []
@@ -283,6 +322,7 @@ class ExpParam:
 
     def __setitem__(self, key, value):
         self.params[key] = value
+
 
 exp = ExpParam()
 

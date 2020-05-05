@@ -31,7 +31,9 @@ def fix_seed(self, seed=10):
     torch.random.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.enabled = True
 
     return {
         "numpy": np.random.get_state(),

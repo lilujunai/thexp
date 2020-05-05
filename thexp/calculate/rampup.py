@@ -22,43 +22,27 @@
 import numpy as np
 
 
-def sigmoid_rampup(current, rampup_length=100, amplitude=1):
+def sigmoid_rampup(current, rampup_length=100, top=1,bottom=0,reverse=False):
     """Exponential rampup from https://arxiv.org/abs/1610.02242"""
-
-    if rampup_length == 0:
-        return 1.0
-    else:
-        current = np.clip(current, 0.0, rampup_length)
-        phase = 1.0 - current / rampup_length
-        return float(np.exp(-5.0 * phase * phase))
+    current = np.clip(current, 0.0, rampup_length)
+    phase = 1.0 - current / rampup_length
+    return float(np.exp(-5.0 * phase * phase))
 
 
-def linear_rampup(current, rampup_length=100, amplitude=1, offset=0):
+def linear_rampup(current, rampup_length=100, start=0, end=1):
     """
-    y
-    \  current
-    \    ↓   ↓ rampup_length
-    \   ↓   -----------   ← amplitude
-    \  ↓ /
-    \ /
-    \ }   offset (independent of amplitude)
-    \-----------------------> x
-    \
-    \
     :param current:
     :param rampup_length:
-    :param amplitude:
-    :param offset:
+    :param start:
+    :param end:
     :return:
     """
 
-
-    """Linear rampup"""
     percent = current / rampup_length
     if percent > 1:
-        return amplitude
+        return end
     else:
-        return percent * amplitude
+        return percent * end + (1 - percent) * start
 
 
 def cosine_rampdown(current, rampdown_length):
